@@ -25,6 +25,7 @@ PHARMACEUTICAL_CATALOG = [
     "Prozac (Fluoxetine)", "Prozac", "Pozac", "Fluoxetine", "Flunil",
     "Ambulax (Alprazolam + Propranolol)", "Ambulax", "Ambulex", "Ambulox",
     "Parx 10 (Paroxetine)", "Parx", "Pari 10", "Pari", "Paroxetine", "Paxil",
+    "Flupentixol & Melitracen Tablets", "Flupentixol & Melitracen", "Somasure", "Somasure (Flupentixol + Melitracen)", "Deanxit",
     "Placida (Flupentixol + Melitracen)", "Placida", "Platida", "Flupentixol", "Melitracen",
     "Esomeprazole (Esoz / Esofag)", "Esoz", "Esofag", "Esogress", "Esoyet", "Esomeprazole",
     "Alprazolam", "Xanax", "Restyl", "Trika", "Clonazepam", "Klonopin", "Clonafit", "Zapiz", "Petril",
@@ -158,6 +159,7 @@ PRESCRIPTION_DRUG_DATABASE = [
     (r"\b(?:montair[\s\-_]?lc|montelukast)\b", "Montair-LC (Montelukast + Levocetirizine)", "tablet", "10 mg", "Once daily (Bedtime - HS)", "Take at bedtime"),
     (r"\b(?:allegra|fexofenadine)\b", "Allegra (Fexofenadine)", "tablet", "120 mg", "Once daily (Morning - OD)", "Take once daily with water"),
     (r"\b(?:shelcal|vitamin\s*d3|calcium)\b", "Shelcal 500 (Calcium + Vitamin D3)", "tablet", "500 mg", "Once daily after lunch", "Take with water after food"),
+    (r"\b(?:flupentixol|melitracen|somasure|placida|deanxit)\b", "Flupentixol & Melitracen (Somasure)", "tablet", "0.5 mg / 10 mg", "Once daily (Morning - OD)", "Take in the morning with water"),
     (r"\b(?:becosules|neurobion)\b", "Becosules / B-Complex", "capsule", "As prescribed", "Once daily after food", "Take once daily after food"),
 ]
 
@@ -307,6 +309,14 @@ def is_valid_medicine_text(text, filename=""):
     for med in PHARMACEUTICAL_CATALOG:
         if re.search(rf"\b{re.escape(med.lower())}\b", combined_lower):
             return True, f"Identified pharmaceutical medication: {med}"
+
+    # 2b. Fuzzy check against pharmaceutical catalog for noisy OCR scans
+    words_in_text = re.findall(r"[a-z]{4,}", combined_lower)
+    catalog_lowers = [m.lower() for m in PHARMACEUTICAL_CATALOG if len(m) >= 4]
+    for word in words_in_text:
+        close = difflib.get_close_matches(word, catalog_lowers, n=1, cutoff=0.75)
+        if close:
+            return True, f"Identified pharmaceutical match: {close[0].title()}"
 
     # 3. Check for chemical pharma suffixes
     if re.search(rf"\b[a-z]{{3,}}(?:{PHARMA_SUFFIXES})\b", combined_lower):
@@ -503,7 +513,7 @@ def parse_ocr_text(text, filename=""):
     """
     clean_fn = _clean_filename_text(filename)
     full_text = text or ""
-    full_search = f"{full_text} {clean_fn}".strip()
+    full_search = re.sub(r"\s+", " ", f"{full_text} {clean_fn}").strip()
 
     # Reject non-medical images
     is_med, reason = is_valid_medicine_text(full_text, filename)

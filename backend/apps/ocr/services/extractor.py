@@ -6,8 +6,23 @@ from PIL import Image, ImageEnhance, ImageOps
 
 logger = logging.getLogger(__name__)
 
-TESSERACT_PATH = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+import shutil
+import sys
+
+# Dynamic Tesseract path discovery across Windows, Linux (Render/Docker), and macOS
+if sys.platform.startswith("win"):
+    if Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe").exists():
+        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    elif shutil.which("tesseract"):
+        pytesseract.pytesseract.tesseract_cmd = shutil.which("tesseract")
+else:
+    # Linux (Render container, Docker, Ubuntu)
+    if shutil.which("tesseract"):
+        pytesseract.pytesseract.tesseract_cmd = shutil.which("tesseract")
+    elif Path("/usr/bin/tesseract").exists():
+        pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+    elif Path("/usr/local/bin/tesseract").exists():
+        pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
 
 
 def _preprocess_variants(img):
