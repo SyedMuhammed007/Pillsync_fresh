@@ -90,6 +90,7 @@ PHARMACEUTICAL_CATALOG = [
     "Loperamide", "Imodium", "Gelusil", "Digene", "Cremaffin",
 
     # ── Respiratory, Allergy & Cold ──
+    "Chlorpheniramine Maleate", "Chlorpheniramine", "Chlor-Trimeton", "Major Allergy Tablets",
     "Cetirizine", "Cetzine", "Zyrtec", "Alerid", "Levocetirizine", "Xyzal", "Levocet",
     "Loratadine", "Claritin", "Fexofenadine", "Allegra", "Bilastine", "Bilaxten",
     "Salbutamol", "Asthalin", "Albuterol", "Ventolin", "Fluticasone", "Flonase",

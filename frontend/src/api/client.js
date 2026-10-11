@@ -5,7 +5,7 @@ const API_BASE_URL =
   (typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://127.0.0.1:8000/api'
-    : '/api');
+    : 'https://pillsync-backend-w0my.onrender.com/api');
 
 const USE_MOCK_API =
   import.meta.env.VITE_USE_MOCK_API === undefined
