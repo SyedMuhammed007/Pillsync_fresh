@@ -84,15 +84,32 @@ export function OCRPage() {
     }
   };
 
+  const getScheduleFromFrequency = (frequency) => {
+    const freqLower = (frequency || '').toLowerCase();
+    if (freqLower.includes('twice') || freqLower.includes('bid') || freqLower.includes('bd')) {
+      return ['08:00 AM', '08:00 PM'];
+    }
+    if (freqLower.includes('three') || freqLower.includes('tid') || freqLower.includes('tds')) {
+      return ['08:00 AM', '02:00 PM', '08:00 PM'];
+    }
+    if (freqLower.includes('four') || freqLower.includes('qid')) {
+      return ['08:00 AM', '12:00 PM', '04:00 PM', '08:00 PM'];
+    }
+    if (freqLower.includes('bedtime') || freqLower.includes('hs') || freqLower.includes('night')) {
+      return ['09:00 PM'];
+    }
+    return ['08:00 AM'];
+  };
+
   const handleAcceptAndAdd = async (item) => {
     try {
       await medicationApi.createMedication({
         name: item.name,
-        dosage: item.strength || item.dosage || '500 mg',
+        dosage: item.strength || item.dosage || '1 tablet',
         frequency: item.frequency || 'Once daily (Morning)',
         quantity: item.quantity || 30,
-        instructions: item.instructions || 'Take with water',
-        schedule: ['08:00 AM'],
+        instructions: item.instructions || 'Take with water as directed',
+        schedule: getScheduleFromFrequency(item.frequency),
         disease: 'Prescribed Care',
         status: 'active',
       });
@@ -102,8 +119,29 @@ export function OCRPage() {
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err) {
       console.error(err);
-      // If saving directly fails, forward to creation form
       navigate('/medications/new', { state: { prefill: item } });
+    }
+  };
+
+  const handleAddAll = async () => {
+    try {
+      for (const item of results) {
+        await medicationApi.createMedication({
+          name: item.name,
+          dosage: item.strength || item.dosage || '1 tablet',
+          frequency: item.frequency || 'Once daily (Morning)',
+          quantity: item.quantity || 30,
+          instructions: item.instructions || 'Take with water as directed',
+          schedule: getScheduleFromFrequency(item.frequency),
+          disease: 'Prescribed Care',
+          status: 'active',
+        });
+      }
+      setSuccessMsg(`All ${results.length} medications added to active prescriptions!`);
+      setResults([]);
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -211,11 +249,25 @@ export function OCRPage() {
 
           {/* Results Panel */}
           <div className="ocr-results-panel">
-            <div className="panel-head">
-              <h2>Extracted Prescription Records</h2>
-              <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
-                {results.length} Scanned
-              </span>
+            <div className="panel-head flex items-center justify-between">
+              <div>
+                <h2>Extracted Prescription Records</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                {results.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleAddAll}
+                    className="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Add All ({results.length}) to Prescriptions</span>
+                  </button>
+                )}
+                <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+                  {results.length} Scanned
+                </span>
+              </div>
             </div>
 
             <div className="ocr-results-list">

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserRole
 from apps.accounts.permissions import IsAdmin, IsCaregiver, IsPatient
 from apps.accounts.schemas import (
     LoginSerializer,
@@ -197,30 +197,29 @@ class UserListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        if User.objects.count() < 3:
-            default_seed = [
-                ("syedmuhammedsr@gmail.com", "System Administrator", "ADMIN", "N/A (Staff)", True),
-                ("admin@example.com", "Platform Administrator", "ADMIN", "N/A (Staff)", True),
-                ("caregiver@example.com", "Caregiver Clinician", "CAREGIVER", "Clinical Caregiver", False),
-                ("s.mitchell@pillsync.org", "Dr. Sarah Mitchell", "CAREGIVER", "Clinical Caregiver", False),
-                ("sarah_test@example.com", "Sarah Test Patient", "PATIENT", "Caregiver Clinician", False),
-                ("patient@example.com", "David Miller", "PATIENT", "Caregiver Clinician", False),
-                ("marcus.v@patient.local", "Marcus Vance", "PATIENT", "Dr. Sarah Mitchell", False),
-                ("elena.r@patient.local", "Elena Rostova", "PATIENT", "Caregiver Clinician", False),
-            ]
-            for email, name, role, assigned, is_super in default_seed:
-                if not User.objects.filter(email__iexact=email).exists():
-                    u = User.objects.create_user(
-                        email=email,
-                        full_name=name,
-                        password="Password123!",
-                        role=role,
-                        assigned_caregiver=assigned,
-                    )
-                    if is_super:
-                        u.is_staff = True
-                        u.is_superuser = True
-                        u.save()
+        default_seed = [
+            ("syedmuhammedsr@gmail.com", "System Administrator", "ADMIN", "N/A (Staff)", True),
+            ("admin@example.com", "Platform Administrator", "ADMIN", "N/A (Staff)", True),
+            ("caregiver@example.com", "Caregiver Clinician", "CAREGIVER", "Clinical Caregiver", False),
+            ("s.mitchell@pillsync.org", "Dr. Sarah Mitchell", "CAREGIVER", "Clinical Caregiver", False),
+            ("sarah_test@example.com", "Sarah Test Patient", "PATIENT", "Caregiver Clinician", False),
+            ("patient@example.com", "David Miller", "PATIENT", "Caregiver Clinician", False),
+            ("marcus.v@patient.local", "Marcus Vance", "PATIENT", "Dr. Sarah Mitchell", False),
+            ("elena.r@patient.local", "Elena Rostova", "PATIENT", "Caregiver Clinician", False),
+        ]
+        for email, name, role, assigned, is_super in default_seed:
+            if not User.objects.filter(email__iexact=email).exists():
+                u = User.objects.create_user(
+                    email=email,
+                    full_name=name,
+                    password="Password123!",
+                    role=role,
+                    assigned_caregiver=assigned,
+                )
+                if is_super:
+                    u.is_staff = True
+                    u.is_superuser = True
+                    u.save()
 
         users = User.objects.all().order_by("-id")
         data = []

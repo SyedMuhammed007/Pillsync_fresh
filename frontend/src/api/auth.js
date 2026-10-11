@@ -367,12 +367,21 @@ const realAuthApi = {
 
     // 2. Also register with Django backend
     try {
-      await apiClient.post('/auth/register/', {
-        email: normalizedEmail,
-        full_name: fullName,
-        password: data.password,
-        role: roleUpper,
-      });
+      try {
+        await apiClient.post('/auth/register/', {
+          email: normalizedEmail,
+          full_name: fullName,
+          password: data.password,
+          role: roleUpper,
+        });
+      } catch (regErr) {
+        await apiClient.post('/auth/users/', {
+          email: normalizedEmail,
+          name: fullName,
+          role: roleUpper,
+          password: data.password,
+        });
+      }
       return await realAuthApi.login(normalizedEmail, data.password, roleLower);
     } catch (err) {
       console.warn('Backend register sync notification:', err?.response?.data || err?.message);

@@ -480,15 +480,17 @@ def extract_multiple_prescription_medicines(full_text, filename=""):
                 inst_val = "Take one capsule three times a day with water"
             elif "one tablet daily" in immediate_context or "tablet oily" in immediate_context:
                 inst_val = "Take one tablet daily with water"
+            else:
+                inst_val = "Take with water as directed by physician"
             # Quantity
-            qty_val = 10
-            qty_match = re.search(r"(?:quantity|qty|dispense|#|count)[:\s]*(\d+)", immediate_context, re.IGNORECASE)
+            qty_val = 30
+            qty_match = re.search(r"\b(?:quantity|qty|dispense|count)[:\s]*(\d{1,3})\b", immediate_context, re.IGNORECASE)
             if not qty_match:
-                qty_match = re.search(r"(?:quantity|qty|dispense|#|count)[:\s]*(\d+)", text, re.IGNORECASE)
+                qty_match = re.search(r"\b(?:quantity|qty|dispense|count)[:\s]*(\d{1,3})\b", full_text, re.IGNORECASE)
             if qty_match:
                 qty_val = int(qty_match.group(1))
             else:
-                qty_tab_match = re.search(r"\b(\d+)\s+(?:tablets?|capsules?|tabs?|caps?)\b", immediate_context, re.IGNORECASE)
+                qty_tab_match = re.search(r"\b(\d{1,3})\s+(?:tablets?|capsules?|tabs?|caps?)\b", immediate_context, re.IGNORECASE)
                 if qty_tab_match:
                     qty_val = int(qty_tab_match.group(1))
 

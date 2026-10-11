@@ -88,7 +88,23 @@ export function DashboardPage() {
     setCohortPatients(getCohortPatients(user));
   }, [user]);
 
-  const [adminUsers] = useState(() => getAdminRegisteredUsers());
+  const [adminUsers, setAdminUsers] = useState(() => getAdminRegisteredUsers());
+
+  useEffect(() => {
+    if (userRole === 'admin') {
+      apiClient
+        .get('/auth/users/')
+        .then((res) => {
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            setAdminUsers(res.data);
+            try {
+              localStorage.setItem('pillsync_registered_users', JSON.stringify(res.data));
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, [userRole]);
   const [patientCheckedIn, setPatientCheckedIn] = useState(() => {
     try {
       const today = new Date().toISOString().split('T')[0];
