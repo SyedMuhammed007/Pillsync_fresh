@@ -11,7 +11,20 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "insecure-default-key-for-dev-and-test
 
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = (
+    os.environ.get("ALLOWED_HOSTS", "*").split(",")
+    if os.environ.get("ALLOWED_HOSTS")
+    else ["*"]
+)
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://*.onrender.com,https://*.vercel.app,http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
 
 
 INSTALLED_APPS = [
@@ -41,6 +54,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -95,6 +109,8 @@ USE_TZ = True
 
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
