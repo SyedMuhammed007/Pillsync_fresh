@@ -195,7 +195,7 @@ class UserListView(APIView):
                 "name": u.full_name or u.email.split("@")[0],
                 "role": role_str,
                 "status": "Active" if u.is_active else "Suspended",
-                "assignedCaregiver": u.assigned_caregiver or "Caregiver Clinician",
+                "assignedCaregiver": u.assigned_caregiver or ("Caregiver Clinician" if role_str == "caregiver" else "Unassigned"),
                 "joined": u.date_joined.strftime("%b %d, %Y") if u.date_joined else "Recent",
                 "last_login": u.last_login.strftime("%b %d, %Y %H:%M") if u.last_login else "Active",
             })
@@ -205,7 +205,7 @@ class UserListView(APIView):
         email = request.data.get("email", "").strip().lower()
         name = request.data.get("name", "").strip() or email.split("@")[0]
         role = request.data.get("role", "patient").upper()
-        assigned = request.data.get("assignedCaregiver", "Caregiver Clinician")
+        assigned = request.data.get("assignedCaregiver", "Unassigned" if role == "PATIENT" else "Caregiver Clinician")
         password = request.data.get("password", "PillSync@2026")
 
         if not email:

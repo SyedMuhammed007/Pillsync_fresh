@@ -198,11 +198,11 @@ const mockAuthApi = {
             condition: 'General Monitoring',
             age: 48,
             gender: 'Patient',
-            adherence: 95,
-            prescriptionsCount: 1,
-            phone: '+1 555-0190',
-            lastTaken: 'Today',
-            assignedCaregiver: 'Caregiver Clinician',
+            adherence: 100,
+            prescriptionsCount: 0,
+            phone: data.phone || '+1 555-0190',
+            lastTaken: 'Not recorded yet',
+            assignedCaregiver: data.assignedCaregiver || 'Unassigned',
           });
           localStorage.setItem('pillsync_assigned_patients', JSON.stringify(pts));
         }
@@ -410,11 +410,11 @@ const realAuthApi = {
             condition: 'General Monitoring',
             age: 48,
             gender: 'Patient',
-            adherence: 95,
-            prescriptionsCount: 1,
-            phone: '+1 555-0190',
-            lastTaken: 'Today',
-            assignedCaregiver: 'Caregiver Clinician',
+            adherence: 100,
+            prescriptionsCount: 0,
+            phone: data.phone || '+1 555-0190',
+            lastTaken: 'Not recorded yet',
+            assignedCaregiver: data.assignedCaregiver || 'Unassigned',
           });
           localStorage.setItem('pillsync_assigned_patients', JSON.stringify(pts));
         }

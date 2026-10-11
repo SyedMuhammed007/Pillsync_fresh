@@ -52,6 +52,7 @@ function loadMergedPatients() {
   const patientUsers = registered.filter(
     (u) =>
       (u.role || 'patient').toLowerCase() === 'patient' &&
+      u.assignedCaregiver &&
       u.assignedCaregiver !== 'Unassigned'
   );
 
@@ -78,7 +79,7 @@ function loadMergedPatients() {
         prescriptionsCount: reg.prescriptionsCount || 1,
         phone: reg.phone || '+1 555-0190',
         lastTaken: 'Today',
-        assignedCaregiver: reg.assignedCaregiver || 'Caregiver Clinician',
+        assignedCaregiver: reg.assignedCaregiver,
         avatar: reg.avatar,
       });
       changed = true;
@@ -152,6 +153,7 @@ export function PatientsPage() {
         const serverPatients = serverUsers.filter(
           (u) =>
             (u.role || '').toLowerCase() === 'patient' &&
+            u.assignedCaregiver &&
             u.assignedCaregiver !== 'Unassigned'
         );
 
@@ -187,7 +189,7 @@ export function PatientsPage() {
                 prescriptionsCount: 1,
                 phone: '+1 555-0190',
                 lastTaken: 'Today',
-                assignedCaregiver: sp.assignedCaregiver || 'Caregiver Clinician',
+                assignedCaregiver: sp.assignedCaregiver,
               });
               changed = true;
             }
@@ -239,11 +241,13 @@ export function PatientsPage() {
 
   const handleSelectRegisteredUser = (userId) => {
     setSelectedRegUser(userId);
+    const myCaregiverName = user?.name || user?.email?.split('@')[0] || 'Caregiver Clinician';
     if (!userId) {
       setNewPatient((prev) => ({
         ...prev,
         name: '',
         email: '',
+        assignedCaregiver: isCaregiver ? myCaregiverName : prev.assignedCaregiver,
       }));
       return;
     }
@@ -256,7 +260,11 @@ export function PatientsPage() {
         email: found.email || '',
         condition: found.condition || prev.condition || 'General Monitoring',
         phone: found.phone || prev.phone || '+1 555-0199',
-        assignedCaregiver: found.assignedCaregiver || 'Caregiver Clinician',
+        assignedCaregiver: isCaregiver
+          ? myCaregiverName
+          : (found.assignedCaregiver && found.assignedCaregiver !== 'Unassigned'
+              ? found.assignedCaregiver
+              : myCaregiverName),
       }));
     }
   };
@@ -270,6 +278,9 @@ export function PatientsPage() {
       newPatient.email.trim() ||
       `${patientName.toLowerCase().replace(/\s+/g, '.')}@patient.local`;
 
+    const myCaregiverName = user?.name || user?.email?.split('@')[0] || 'Caregiver Clinician';
+    const targetCaregiver = isCaregiver ? myCaregiverName : (newPatient.assignedCaregiver || myCaregiverName);
+
     let created = {
       id: selectedRegUser || `pt-${Date.now()}`,
       name: patientName,
@@ -281,14 +292,14 @@ export function PatientsPage() {
       prescriptionsCount: parseInt(newPatient.prescriptionsCount, 10) || 1,
       phone: newPatient.phone || '+1 555-0190',
       lastTaken: 'Today',
-      assignedCaregiver: newPatient.assignedCaregiver || 'Caregiver Clinician',
+      assignedCaregiver: targetCaregiver,
     };
 
     // Save to central backend if user exists
     if (selectedRegUser && !isNaN(Number(selectedRegUser))) {
       try {
         await apiClient.patch(`/auth/users/${selectedRegUser}/`, {
-          assignedCaregiver: created.assignedCaregiver,
+          assignedCaregiver: targetCaregiver,
         });
       } catch (err) {
         console.warn('Backend user assign error:', err);
@@ -299,7 +310,7 @@ export function PatientsPage() {
           email: patientEmail,
           name: patientName,
           role: 'patient',
-          assignedCaregiver: created.assignedCaregiver,
+          assignedCaregiver: targetCaregiver,
         });
         if (res.data?.id) {
           created.id = res.data.id;
@@ -307,6 +318,30 @@ export function PatientsPage() {
       } catch (err) {
         console.warn('Backend user create error:', err);
       }
+    }
+
+    // Sync pillsync_registered_users in local storage & state
+    try {
+      const rawReg = localStorage.getItem('pillsync_registered_users');
+      if (rawReg) {
+        const parsed = JSON.parse(rawReg);
+        if (Array.isArray(parsed)) {
+          const updatedReg = parsed.map((u) => {
+            if (
+              (selectedRegUser && String(u.id) === String(selectedRegUser)) ||
+              (u.email && patientEmail && u.email.toLowerCase() === patientEmail.toLowerCase()) ||
+              (u.name && patientName && u.name.toLowerCase() === patientName.toLowerCase())
+            ) {
+              return { ...u, assignedCaregiver: targetCaregiver };
+            }
+            return u;
+          });
+          localStorage.setItem('pillsync_registered_users', JSON.stringify(updatedReg));
+          setRegisteredUsers(updatedReg);
+        }
+      }
+    } catch (e) {
+      console.error(e);
     }
 
     // Update patients state & local storage
@@ -332,7 +367,7 @@ export function PatientsPage() {
       adherence: 92,
       prescriptionsCount: 2,
       phone: '+1 555-0194',
-      assignedCaregiver: 'Caregiver Clinician',
+      assignedCaregiver: isCaregiver ? myCaregiverName : 'Caregiver Clinician',
     });
 
     showToast(
@@ -883,11 +918,17 @@ export function PatientsPage() {
                       className="w-full rounded-xl border border-indigo-200 bg-indigo-50/40 px-3 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 font-medium"
                     >
                       <option value="">-- Or enter new patient details below --</option>
-                      {availableRegisteredPatients.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name} ({u.email})
-                        </option>
-                      ))}
+                      {availableRegisteredPatients.map((u) => {
+                        const status =
+                          u.assignedCaregiver && u.assignedCaregiver !== 'Unassigned'
+                            ? `Assigned: ${u.assignedCaregiver}`
+                            : 'Unassigned';
+                        return (
+                          <option key={u.id} value={u.id}>
+                            {u.name} ({u.email}) — [{status}]
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 )}
@@ -960,24 +1001,33 @@ export function PatientsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Caregiver Taking Care *
+                      Assigned Caregiver *
                     </label>
-                    <select
-                      value={newPatient.assignedCaregiver}
-                      onChange={(e) =>
-                        setNewPatient({
-                          ...newPatient,
-                          assignedCaregiver: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-indigo-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                    >
-                      {caregiverOptions.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
+                    {isCaregiver ? (
+                      <div className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-xs font-bold text-indigo-700">
+                        <ShieldCheck className="h-4 w-4 text-indigo-600 shrink-0" />
+                        <span className="truncate">
+                          {user?.name || user?.email?.split('@')[0] || 'Caregiver Clinician'} (You)
+                        </span>
+                      </div>
+                    ) : (
+                      <select
+                        value={newPatient.assignedCaregiver}
+                        onChange={(e) =>
+                          setNewPatient({
+                            ...newPatient,
+                            assignedCaregiver: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-indigo-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                      >
+                        {caregiverOptions.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">

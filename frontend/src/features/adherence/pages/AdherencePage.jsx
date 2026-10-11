@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/useAuth';
 import { adherenceApi, mockAdherenceData } from '../../../api/adherence';
+import { getCohortPatients } from '../../../utils/cohort';
+import { getScopedStorage } from '../../../utils/userStorage';
 import { Layout } from '../../../components/layout';
 import { CardSkeleton, Alert } from '../../../components/common';
 import { Badge } from '../../../components/common/Badge';
@@ -32,11 +35,15 @@ import {
   Activity,
   Droplets,
   Pill,
+  Users,
 } from 'lucide-react';
 import './AdherencePage.css';
 
 export function AdherencePage() {
   const { user } = useAuth();
+  const userRole = (user?.role || '').toLowerCase();
+  const isCaregiver = userRole === 'caregiver';
+
   const [summary, setSummary] = useState(mockAdherenceData.summary);
   const [weeklyData, setWeeklyData] = useState(mockAdherenceData.weeklyAdherence);
   const [healthData, setHealthData] = useState(mockAdherenceData.healthImprovement);
@@ -45,11 +52,101 @@ export function AdherencePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const cohort = isCaregiver ? getCohortPatients(user) : [];
+
   useEffect(() => {
     let isMounted = true;
     const fetchAdherenceData = async () => {
       try {
         setLoading(true);
+
+        if (isCaregiver) {
+          const currentCohort = getCohortPatients(user);
+          if (currentCohort.length === 0) {
+            if (isMounted) {
+              setSummary({
+                overallAdherence: 0,
+                takenDoses: 0,
+                missedDoses: 0,
+                totalDoses: 0,
+                streak: 0,
+                healthScore: 0,
+                avgSystolic: 120,
+                avgBloodSugar: 100,
+                vitalityLevel: 'No Patients Assigned',
+              });
+              setWeeklyData([]);
+              setHealthData([]);
+              setMedicationHistory([]);
+            }
+            return;
+          }
+
+          const avgCohortAdherence = Math.round(
+            currentCohort.reduce((acc, p) => acc + (p.adherence || 95), 0) / currentCohort.length
+          );
+          const totalDoses = currentCohort.length * 2;
+          const takenDoses = Math.round(totalDoses * (avgCohortAdherence / 100));
+
+          if (isMounted) {
+            setSummary({
+              overallAdherence: avgCohortAdherence,
+              takenDoses,
+              missedDoses: totalDoses - takenDoses,
+              totalDoses,
+              streak: 3,
+              healthScore: Math.min(100, avgCohortAdherence + 2),
+              avgSystolic: 122,
+              avgBloodSugar: 102,
+              vitalityLevel: 'Cohort Monitored',
+            });
+            setWeeklyData([
+              { day: 'Mon', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+              { day: 'Tue', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+              { day: 'Wed', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+              { day: 'Thu', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+              { day: 'Fri', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+              { day: 'Sat', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+              { day: 'Sun', adherence: avgCohortAdherence, taken: takenDoses, missed: 0 },
+            ]);
+            setHealthData([]);
+            setMedicationHistory(
+              currentCohort.map((p, i) => ({
+                id: p.id || String(i + 1),
+                medicationName: `${p.name}'s Regimen`,
+                category: p.condition || 'General Monitoring',
+                taken: 1,
+                missed: 0,
+                adherence: p.adherence || 95,
+                impact: 'Regimen active and monitored in clinical protocol.',
+              }))
+            );
+          }
+          return;
+        }
+
+        // For patient role:
+        const userMeds = getScopedStorage('pillsync_patient_medications', []);
+        if (!userMeds || userMeds.length === 0) {
+          if (isMounted) {
+            setSummary({
+              overallAdherence: 0,
+              takenDoses: 0,
+              missedDoses: 0,
+              totalDoses: 0,
+              streak: 0,
+              healthScore: 100,
+              avgSystolic: 120,
+              avgBloodSugar: 100,
+              vitalityLevel: 'Baseline Optimal',
+            });
+            setWeeklyData([]);
+            setHealthData([]);
+            setMedicationHistory([]);
+          }
+          return;
+        }
+
         const [summaryRes, weeklyRes, healthRes, historyRes] = await Promise.all([
           adherenceApi.getSummary().catch(() => mockAdherenceData.summary),
           adherenceApi.getWeeklyAdherence().catch(() => mockAdherenceData.weeklyAdherence),
@@ -74,7 +171,7 @@ export function AdherencePage() {
     return () => {
       isMounted = false;
     };
-  }, [user?.id, user?.email]);
+  }, [user?.id, user?.email, isCaregiver]);
 
   if (loading) {
     return (
@@ -130,7 +227,9 @@ export function AdherencePage() {
         <div className="adherence-header">
           <div>
             <div className="adherence-title-row">
-              <h1 className="adherence-title">Adherence &amp; Health Analytics</h1>
+              <h1 className="adherence-title">
+                {isCaregiver ? 'Cohort Adherence & Clinical Analytics' : 'Adherence & Health Analytics'}
+              </h1>
               <Badge variant="success" size="sm">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {summary.overallAdherence}% Target Met
@@ -140,8 +239,9 @@ export function AdherencePage() {
               </Badge>
             </div>
             <p className="adherence-subtitle">
-              Longitudinal tracking of medication intake consistency, streaks, and daily health
-              improvement vitals
+              {isCaregiver
+                ? 'Longitudinal tracking of assigned patient intake consistency, clinical adherence, and risk flags'
+                : 'Longitudinal tracking of medication intake consistency, streaks, and daily health improvement vitals'}
             </p>
           </div>
 
@@ -158,6 +258,50 @@ export function AdherencePage() {
         </div>
 
         {error && <Alert type="danger" message={error} onClose={() => setError('')} />}
+
+        {isCaregiver && cohort.length === 0 && (
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shrink-0">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-800">No Patients In Your Care Cohort Yet</h3>
+                <p className="text-[11px] text-slate-500">
+                  Assign patients from the Patients Portal to monitor real-time adherence telemetry, dose streaks, and vital improvements.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/patients"
+              className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 transition shrink-0"
+            >
+              Assign Patients
+            </Link>
+          </div>
+        )}
+
+        {!isCaregiver && summary.totalDoses === 0 && (
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shrink-0">
+                <Pill className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-slate-800">No Prescriptions Logged Yet</h3>
+                <p className="text-[11px] text-slate-500">
+                  Scan or add your daily medications to begin tracking clinical adherence, streaks, and health vitals.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/medications/new"
+              className="rounded-xl bg-indigo-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 transition shrink-0"
+            >
+              Add Medication
+            </Link>
+          </div>
+        )}
 
         {/* 1. Summary Stat KPI Cards */}
         <div className="adherence-kpi-grid">

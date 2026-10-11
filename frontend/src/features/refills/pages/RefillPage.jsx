@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../context/useAuth';
 import { medicationApi } from '../../../api/medications';
+import { getCohortPatients } from '../../../utils/cohort';
+import { getScopedStorageForUser } from '../../../utils/userStorage';
 import { Layout } from '../../../components/layout';
 import {
   AlertTriangle,
@@ -10,10 +13,15 @@ import {
   PackageCheck,
   Plus,
   Pill,
+  Users,
 } from 'lucide-react';
 import './RefillPage.css';
 
 export function RefillPage() {
+  const { user } = useAuth();
+  const userRole = (user?.role || '').toLowerCase();
+  const isCaregiver = userRole === 'caregiver';
+
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderedRefills, setOrderedRefills] = useState({});
@@ -21,6 +29,25 @@ export function RefillPage() {
   useEffect(() => {
     const fetchMeds = async () => {
       try {
+        if (isCaregiver) {
+          const currentCohort = getCohortPatients(user);
+          if (currentCohort.length === 0) {
+            setMedications([]);
+            setLoading(false);
+            return;
+          }
+          const cohortMeds = [];
+          currentCohort.forEach((pt) => {
+            const ptMeds = getScopedStorageForUser(pt.email || pt.id, 'pillsync_patient_medications', []);
+            if (ptMeds && ptMeds.length > 0) {
+              cohortMeds.push(...ptMeds.map((m) => ({ ...m, patientName: pt.name })));
+            }
+          });
+          setMedications(cohortMeds);
+          setLoading(false);
+          return;
+        }
+
         const data = await medicationApi.getMedications();
         setMedications(data || []);
       } catch (err) {
@@ -30,7 +57,7 @@ export function RefillPage() {
       }
     };
     fetchMeds();
-  }, []);
+  }, [user?.id, user?.email, isCaregiver]);
 
   const handleOrderRefill = (item) => {
     setOrderedRefills((prev) => ({ ...prev, [item.id]: true }));
@@ -157,6 +184,23 @@ export function RefillPage() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : isCaregiver ? (
+          <div className="py-12 text-center rounded-2xl border border-slate-200 bg-white p-8">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 mb-3">
+              <Users className="h-6 w-6" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">No cohort prescriptions tracked for refill</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Assign patients to your care cohort in the Patients Portal to track their medication supplies and refill forecasts.
+            </p>
+            <Link
+              to="/patients"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 transition"
+            >
+              <Users className="h-4 w-4" />
+              Assign Patients
+            </Link>
           </div>
         ) : (
           <div className="py-12 text-center rounded-2xl border border-slate-200 bg-white p-8">

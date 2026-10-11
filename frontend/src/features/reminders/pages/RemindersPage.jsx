@@ -7,7 +7,7 @@ import { Badge } from '../../../components/common/Badge';
 import { EmptyState, CardSkeleton, Alert } from '../../../components/common';
 import { Clock, CheckCircle, Calendar, Users, Phone, Bell, ShieldCheck } from 'lucide-react';
 import { playDoseAlertChime, dispatchNativeDoseAlert } from '../../../utils/audioChime';
-import { getCohortPatientNames } from '../../../utils/cohort';
+import { getCohortPatients, getCohortPatientNames } from '../../../utils/cohort';
 import './RemindersPage.css';
 
 export function RemindersPage() {
@@ -19,7 +19,7 @@ export function RemindersPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [selectedPatient, setSelectedPatient] = useState('All Patients');
 
-  const userRole = user?.role || 'patient';
+  const userRole = (user?.role || 'patient').toLowerCase();
   const isCaregiver = userRole === 'caregiver' || userRole === 'admin';
   const [cohortPatients, setCohortPatients] = useState(() => getCohortPatientNames(user));
 
@@ -32,8 +32,69 @@ export function RemindersPage() {
 
     const loadReminders = async () => {
       try {
-        const data = await reminderApi.getReminders();
+        if (userRole === 'caregiver') {
+          const cohort = getCohortPatients(user);
+          // If caregiver has no assigned patients, reminders list is strictly empty
+          if (cohort.length === 0) {
+            if (!cancelled) {
+              setReminders([]);
+            }
+            return;
+          }
 
+          // Gather reminders across all assigned cohort patients
+          const cohortReminders = [];
+          cohort.forEach((p) => {
+            const pKey = p.email ? p.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+            let pMeds = [];
+            try {
+              const rawMeds = localStorage.getItem(`pillsync_patient_medications_${pKey}`);
+              if (rawMeds) pMeds = JSON.parse(rawMeds);
+            } catch {}
+
+            let pStoredReminders = [];
+            try {
+              const rawRem = localStorage.getItem(`pillsync_reminders_${pKey}`);
+              if (rawRem) pStoredReminders = JSON.parse(rawRem);
+            } catch {}
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            if (Array.isArray(pMeds) && pMeds.length > 0) {
+              pMeds.forEach((m) => {
+                const schedules = Array.isArray(m.schedule) && m.schedule.length > 0 ? m.schedule : ['08:00 AM'];
+                schedules.forEach((timeStr) => {
+                  const genId = `rem-${p.id || p.name}-${m.id || m.name}-${timeStr.replace(/[^a-zA-Z0-9]/g, '')}`;
+                  const existing = pStoredReminders.find(
+                    (er) =>
+                      String(er.id) === String(genId) ||
+                      (er.medicationName && er.medicationName.trim().toLowerCase() === m.name.trim().toLowerCase() && er.time === timeStr)
+                  );
+                  cohortReminders.push({
+                    id: genId,
+                    patient: p.name,
+                    patientEmail: p.email,
+                    medicationId: m.id,
+                    medicationName: `${m.name} ${m.dosage || ''}`.trim(),
+                    dosage: m.dosage || '',
+                    time: timeStr,
+                    schedule: timeStr.includes('PM') ? 'Evening' : 'Morning',
+                    date: todayStr,
+                    status: existing?.status || 'upcoming',
+                    instructions: m.instructions || 'Daily dose',
+                  });
+                });
+              });
+            }
+          });
+
+          if (!cancelled) {
+            setReminders(cohortReminders);
+          }
+          return;
+        }
+
+        const data = await reminderApi.getReminders();
         if (!cancelled) {
           setReminders(data || []);
         }
@@ -54,7 +115,7 @@ export function RemindersPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email]);
+  }, [user?.id, user?.email, userRole]);
 
   const handleMarkTaken = async (id) => {
     try {

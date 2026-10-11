@@ -1,54 +1,59 @@
 import { apiClient, USE_MOCK_API } from './client';
-import { getScopedStorage, setScopedStorage } from '../utils/userStorage';
+import { getScopedStorage, setScopedStorage, getCurrentUser } from '../utils/userStorage';
 
 // Real dynamic reminders storage linked to user's saved medications (Zero dummy data)
 function getStoredReminders() {
+  const currentUser = getCurrentUser();
   const existingReminders = getScopedStorage('pillsync_reminders', []) || [];
   let meds = getScopedStorage('pillsync_patient_medications', null);
 
   if (!meds || !Array.isArray(meds) || meds.length === 0) {
-    meds = [
-      {
-        id: 'med-reg-1',
-        name: 'Metformin HCl',
-        condition: 'Type 2 Diabetes Mellitus',
-        disease: 'Diabetes',
-        dosage: '500mg',
-        form: 'Oral Tablet',
-        frequency: 'Twice daily',
-        schedule: ['08:00 AM', '08:00 PM'],
-        instructions: 'Take with or immediately after meals',
-        quantity: 60,
-        status: 'active',
-      },
-      {
-        id: 'med-reg-2',
-        name: 'Lisinopril',
-        condition: 'Hypertension (High Blood Pressure)',
-        disease: 'Hypertension',
-        dosage: '10mg',
-        form: 'Oral Tablet',
-        frequency: 'Once daily (Morning)',
-        schedule: ['08:00 AM'],
-        instructions: 'Take in the morning with water',
-        quantity: 30,
-        status: 'active',
-      },
-      {
-        id: 'med-reg-3',
-        name: 'Atorvastatin (Lipitor)',
-        condition: 'High Cholesterol',
-        disease: 'Cardiovascular Care',
-        dosage: '20mg',
-        form: 'Oral Tablet',
-        frequency: 'Once daily (Bedtime)',
-        schedule: ['09:00 PM'],
-        instructions: 'Take at bedtime with water',
-        quantity: 30,
-        status: 'active',
-      },
-    ];
-    setScopedStorage('pillsync_patient_medications', meds);
+    if (currentUser?.email?.toLowerCase() === 'patient@example.com') {
+      meds = [
+        {
+          id: 'med-reg-1',
+          name: 'Metformin HCl',
+          condition: 'Type 2 Diabetes Mellitus',
+          disease: 'Diabetes',
+          dosage: '500mg',
+          form: 'Oral Tablet',
+          frequency: 'Twice daily',
+          schedule: ['08:00 AM', '08:00 PM'],
+          instructions: 'Take with or immediately after meals',
+          quantity: 60,
+          status: 'active',
+        },
+        {
+          id: 'med-reg-2',
+          name: 'Lisinopril',
+          condition: 'Hypertension (High Blood Pressure)',
+          disease: 'Hypertension',
+          dosage: '10mg',
+          form: 'Oral Tablet',
+          frequency: 'Once daily (Morning)',
+          schedule: ['08:00 AM'],
+          instructions: 'Take in the morning with water',
+          quantity: 30,
+          status: 'active',
+        },
+        {
+          id: 'med-reg-3',
+          name: 'Atorvastatin (Lipitor)',
+          condition: 'High Cholesterol',
+          disease: 'Cardiovascular Care',
+          dosage: '20mg',
+          form: 'Oral Tablet',
+          frequency: 'Once daily (Bedtime)',
+          schedule: ['09:00 PM'],
+          instructions: 'Take at bedtime with water',
+          quantity: 30,
+          status: 'active',
+        },
+      ];
+      setScopedStorage('pillsync_patient_medications', meds);
+    } else {
+      return [];
+    }
   }
 
   const todayStr = new Date().toISOString().split('T')[0];

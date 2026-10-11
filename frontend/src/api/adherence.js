@@ -7,10 +7,10 @@ function getStoredAdherence() {
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  if (userMeds.length === 0) {
+  if (!userMeds || userMeds.length === 0) {
     return {
       summary: {
-        overallAdherence: 100,
+        overallAdherence: 0,
         takenDoses: 0,
         missedDoses: 0,
         totalDoses: 0,
@@ -22,15 +22,15 @@ function getStoredAdherence() {
       },
       weeklyAdherence: days.map((day) => ({
         day,
-        adherence: 100,
+        adherence: 0,
         taken: 0,
         missed: 0,
       })),
       monthlyAdherence: [
-        { week: 'Week 1', adherence: 100, healthScore: 100 },
-        { week: 'Week 2', adherence: 100, healthScore: 100 },
-        { week: 'Week 3', adherence: 100, healthScore: 100 },
-        { week: 'Week 4', adherence: 100, healthScore: 100 },
+        { week: 'Week 1', adherence: 0, healthScore: 100 },
+        { week: 'Week 2', adherence: 0, healthScore: 100 },
+        { week: 'Week 3', adherence: 0, healthScore: 100 },
+        { week: 'Week 4', adherence: 0, healthScore: 100 },
       ],
       healthImprovement: [],
       medicationHistory: [],
@@ -77,7 +77,23 @@ function getStoredAdherence() {
   };
 }
 
-export const mockAdherenceData = getStoredAdherence();
+export const mockAdherenceData = {
+  summary: {
+    overallAdherence: 0,
+    takenDoses: 0,
+    missedDoses: 0,
+    totalDoses: 0,
+    streak: 0,
+    healthScore: 100,
+    avgSystolic: 120,
+    avgBloodSugar: 100,
+    vitalityLevel: 'Baseline Optimal',
+  },
+  weeklyAdherence: [],
+  monthlyAdherence: [],
+  healthImprovement: [],
+  medicationHistory: [],
+};
 
 const mockAdherenceApi = {
   getSummary: async () => {

@@ -65,3 +65,18 @@ export function removeScopedStorage(namespace) {
     console.error(`Error removing ${namespace} for user:`, err);
   }
 }
+
+export function getScopedStorageForUser(userIdentifier, namespace, defaultValue = []) {
+  try {
+    if (!userIdentifier) return defaultValue;
+    const cleanKey = String(userIdentifier).trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const key = `${namespace}_${cleanKey}`;
+    const raw = localStorage.getItem(key);
+    if (raw !== null) {
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.error(`Error reading ${namespace} for user ${userIdentifier}:`, err);
+  }
+  return defaultValue;
+}

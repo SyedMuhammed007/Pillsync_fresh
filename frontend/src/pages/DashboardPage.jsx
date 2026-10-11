@@ -598,10 +598,10 @@ export function DashboardPage() {
                 <div>
                   <p className="dashboard-kpi-label">Cohort Avg Adherence</p>
                   <p className="dashboard-kpi-value text-emerald-600">
-                    {cohortPatients.length > 0 ? '80.0%' : '100%'}
+                    {cohortPatients.length > 0 ? '80.0%' : '0%'}
                   </p>
-                  <p className="dashboard-kpi-meta text-emerald-600 font-semibold">
-                    {cohortPatients.length > 0 ? '+2.4% this week' : 'Baseline target'}
+                  <p className="dashboard-kpi-meta text-slate-500 font-semibold">
+                    {cohortPatients.length > 0 ? '+2.4% this week' : 'No patients assigned'}
                   </p>
                 </div>
                 <div className="dashboard-kpi-icon bg-emerald-50 text-emerald-600">
@@ -1401,10 +1401,10 @@ export function DashboardPage() {
                   <p className="dashboard-kpi-value">
                     {patientDoses.length > 0
                       ? `${Math.round((takenCount / patientDoses.length) * 100)}%`
-                      : '100%'}
+                      : '0%'}
                   </p>
-                  <p className="dashboard-kpi-meta text-emerald-600 font-semibold">
-                    {patientDoses.length > 0 ? '+4.2% vs target' : 'Optimal baseline'}
+                  <p className="dashboard-kpi-meta text-slate-500 font-semibold">
+                    {patientDoses.length > 0 ? '+4.2% vs target' : 'No active regimens'}
                   </p>
                 </div>
                 <div className="dashboard-kpi-icon bg-violet-50 text-violet-600">
