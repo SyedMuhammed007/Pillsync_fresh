@@ -13,7 +13,127 @@ const SYSTEM_ADMIN_USER = {
   avatar: 'https://ui-avatars.com/api/?name=Syed+Muhammed&background=0d9488&color=fff',
 };
 
-const DEFAULT_DEMO_USERS = [SYSTEM_ADMIN_USER];
+export function isDemoEmail(email) {
+  if (!email) return false;
+  const lower = String(email).toLowerCase();
+  return (
+    lower.includes('@example.com') ||
+    lower.includes('.local') ||
+    lower.includes('@pillsync.auth') ||
+    lower.includes('@pillsync.org')
+  );
+}
+
+export const WORKING_ACCOUNTS = [
+  {
+    id: 5,
+    email: 'syedmuhammedsr@gmail.com',
+    name: 'Syed Muhammed',
+    role: 'admin',
+    assignedCaregiver: 'N/A (Staff)',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 10,
+    email: 'souju@gmail.com',
+    name: 'souju',
+    role: 'caregiver',
+    assignedCaregiver: 'Clinical Caregiver',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 15,
+    email: 'praveen@gmail.com',
+    name: 'praveen',
+    role: 'caregiver',
+    assignedCaregiver: 'Clinical Caregiver',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 17,
+    email: 'ramram@gmail.com',
+    name: 'Ram',
+    role: 'caregiver',
+    assignedCaregiver: 'Clinical Caregiver',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 6,
+    email: 'elava@gmail.com',
+    name: 'elavazhagan',
+    role: 'patient',
+    assignedCaregiver: 'praveen',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 8,
+    email: 'rohith@gmail.com',
+    name: 'rohith',
+    role: 'patient',
+    assignedCaregiver: 'souju',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 9,
+    email: 'somu@gmail.com',
+    name: 'somu',
+    role: 'patient',
+    assignedCaregiver: 'Ram',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 11,
+    email: 'ruchi@gmail.com',
+    name: 'ruchi',
+    role: 'patient',
+    assignedCaregiver: 'souju',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 12,
+    email: 'soru@gmail.com',
+    name: 'soru',
+    role: 'patient',
+    assignedCaregiver: 'souju',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 13,
+    email: 'syeds@gmail.com',
+    name: 'syed',
+    role: 'patient',
+    assignedCaregiver: 'Ram',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 14,
+    email: 'santhosh@gmail.com',
+    name: 'santhosh',
+    role: 'patient',
+    assignedCaregiver: 'praveen',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+  {
+    id: 16,
+    email: 'dhivagarswathi@gmail.com',
+    name: 'Swathi',
+    role: 'patient',
+    assignedCaregiver: 'praveen',
+    status: 'Active',
+    joined: 'Oct 09, 2026',
+  },
+];
 
 // Helper to get all registered users (local storage)
 function getRegisteredUsers() {
@@ -23,30 +143,29 @@ function getRegisteredUsers() {
     if (local) {
       const parsed = JSON.parse(local);
       if (Array.isArray(parsed)) {
-        users = parsed;
+        // Filter out demo accounts
+        users = parsed.filter((u) => !isDemoEmail(u.email));
       }
     }
   } catch (err) {
     console.error('Error reading registered users:', err);
   }
 
-  // Ensure system admin and default demo users are always present
-  let modified = false;
-  for (const defUser of DEFAULT_DEMO_USERS) {
+  // Ensure all working accounts are always present
+  for (const workUser of WORKING_ACCOUNTS) {
     const idx = users.findIndex(
-      (u) => u.email && u.email.toLowerCase() === defUser.email.toLowerCase()
+      (u) => u.email && u.email.toLowerCase() === workUser.email.toLowerCase()
     );
     if (idx === -1) {
-      users.push(defUser);
-      modified = true;
+      users.push(workUser);
+    } else {
+      users[idx] = { ...workUser, ...users[idx] };
     }
   }
 
-  if (modified) {
-    try {
-      localStorage.setItem('pillsync_registered_users', JSON.stringify(users));
-    } catch {}
-  }
+  try {
+    localStorage.setItem('pillsync_registered_users', JSON.stringify(users));
+  } catch {}
   return users;
 }
 

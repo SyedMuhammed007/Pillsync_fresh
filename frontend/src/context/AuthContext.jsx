@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { authApi } from '../api/auth';
+import { authApi, isDemoEmail, WORKING_ACCOUNTS } from '../api/auth';
 import { apiClient } from '../api/client';
 import { AuthContext } from './AuthContextValue';
 import { decodeJWT, isTokenExpired, generateJWT } from '../utils/jwt';
@@ -52,19 +52,17 @@ export function AuthProvider({ children }) {
         if (Array.isArray(res.data) && res.data.length > 0) {
           const raw = localStorage.getItem('pillsync_registered_users');
           const localUsers = raw ? JSON.parse(raw) : [];
-          const merged = Array.isArray(localUsers) ? [...localUsers] : [];
-          for (const dbUser of res.data) {
+          const cleanLocal = Array.isArray(localUsers)
+            ? localUsers.filter((u) => !isDemoEmail(u.email))
+            : [];
+          const cleanServer = res.data.filter((u) => !isDemoEmail(u.email));
+          const merged = [...cleanServer];
+          for (const localU of cleanLocal) {
             const exists = merged.some(
-              (u) => u.email && dbUser.email && u.email.toLowerCase() === dbUser.email.toLowerCase()
+              (u) => u.email && localU.email && u.email.toLowerCase() === localU.email.toLowerCase()
             );
             if (!exists) {
-              merged.push({
-                id: dbUser.id,
-                email: dbUser.email,
-                name: dbUser.name,
-                role: dbUser.role,
-                assignedCaregiver: dbUser.assignedCaregiver || 'Caregiver Clinician',
-              });
+              merged.push(localU);
             }
           }
           localStorage.setItem('pillsync_registered_users', JSON.stringify(merged));

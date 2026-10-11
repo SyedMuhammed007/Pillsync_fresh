@@ -71,10 +71,10 @@ class LoginView(APIView):
         user = User.objects.filter(email__iexact=clean_email).first()
 
         if user is None:
-            if clean_email == "admin@example.com" or requested_role == "ADMIN":
+            if clean_email in ["admin@example.com", "syedmuhammedsr@gmail.com"] or requested_role == "ADMIN":
                 user = User.objects.create_superuser(
                     email=clean_email,
-                    full_name="System Administrator",
+                    full_name="Syed Muhammed" if clean_email == "syedmuhammedsr@gmail.com" else "System Administrator",
                     password=password,
                 )
             else:
@@ -201,19 +201,28 @@ class AdminOnlyView(APIView):
 class UserListView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request):
-        default_seed = [
-            ("syedmuhammedsr@gmail.com", "System Administrator", "ADMIN", "N/A (Staff)", True),
-            ("admin@example.com", "Platform Administrator", "ADMIN", "N/A (Staff)", True),
-            ("caregiver@example.com", "Caregiver Clinician", "CAREGIVER", "Clinical Caregiver", False),
-            ("s.mitchell@pillsync.org", "Dr. Sarah Mitchell", "CAREGIVER", "Clinical Caregiver", False),
-            ("sarah_test@example.com", "Sarah Test Patient", "PATIENT", "Caregiver Clinician", False),
-            ("patient@example.com", "David Miller", "PATIENT", "Caregiver Clinician", False),
-            ("marcus.v@patient.local", "Marcus Vance", "PATIENT", "Dr. Sarah Mitchell", False),
-            ("elena.r@patient.local", "Elena Rostova", "PATIENT", "Caregiver Clinician", False),
+        # Remove legacy demo accounts
+        User.objects.filter(email__icontains="@example.com").delete()
+        User.objects.filter(email__icontains=".local").delete()
+        User.objects.filter(email__icontains="@pillsync.org").delete()
+
+        working_seed = [
+            ("syedmuhammedsr@gmail.com", "Syed Muhammed", "ADMIN", "N/A (Staff)", True),
+            ("souju@gmail.com", "souju", "CAREGIVER", "Clinical Caregiver", False),
+            ("praveen@gmail.com", "praveen", "CAREGIVER", "Clinical Caregiver", False),
+            ("ramram@gmail.com", "Ram", "CAREGIVER", "Clinical Caregiver", False),
+            ("elava@gmail.com", "elavazhagan", "PATIENT", "praveen", False),
+            ("rohith@gmail.com", "rohith", "PATIENT", "souju", False),
+            ("somu@gmail.com", "somu", "PATIENT", "Ram", False),
+            ("ruchi@gmail.com", "ruchi", "PATIENT", "souju", False),
+            ("soru@gmail.com", "soru", "PATIENT", "souju", False),
+            ("syeds@gmail.com", "syed", "PATIENT", "Ram", False),
+            ("santhosh@gmail.com", "santhosh", "PATIENT", "praveen", False),
+            ("dhivagarswathi@gmail.com", "Swathi", "PATIENT", "praveen", False),
         ]
-        for email, name, role, assigned, is_super in default_seed:
-            if not User.objects.filter(email__iexact=email).exists():
+        for email, name, role, assigned, is_super in working_seed:
+            u = User.objects.filter(email__iexact=email).first()
+            if not u:
                 u = User.objects.create_user(
                     email=email,
                     full_name=name,
@@ -225,8 +234,20 @@ class UserListView(APIView):
                     u.is_staff = True
                     u.is_superuser = True
                     u.save()
+            else:
+                if u.role != role:
+                    u.role = role
+                    if is_super:
+                        u.is_staff = True
+                        u.is_superuser = True
+                    u.save()
 
-        users = User.objects.all().order_by("-id")
+        users = (
+            User.objects.exclude(email__icontains="@example.com")
+            .exclude(email__icontains=".local")
+            .exclude(email__icontains="@pillsync.org")
+            .order_by("-id")
+        )
         data = []
         for u in users:
             role_str = u.role.lower() if u.role else "patient"

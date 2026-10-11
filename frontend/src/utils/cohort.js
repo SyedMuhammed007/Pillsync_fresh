@@ -1,3 +1,5 @@
+import { isDemoEmail } from '../api/auth';
+
 /**
  * Cohort management helper for PillSync.
  * Determines patient assignment to caregivers and retrieves the active cohort.
@@ -39,6 +41,7 @@ export function getAllMergedPatients() {
         registeredPatients = users
           .filter(
             (u) =>
+              !isDemoEmail(u.email) &&
               (u.role || 'patient').toLowerCase() === 'patient' &&
               u.assignedCaregiver &&
               u.assignedCaregiver !== 'Unassigned'
@@ -69,7 +72,7 @@ export function getAllMergedPatients() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        allPatients = parsed;
+        allPatients = parsed.filter((p) => !isDemoEmail(p.email));
       }
     }
   } catch (err) {

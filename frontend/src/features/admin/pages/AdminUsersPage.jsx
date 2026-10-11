@@ -6,9 +6,10 @@ import { Badge } from '../../../components/common/Badge';
 import { Button } from '../../../components/common/Button';
 
 import { Plus, Search, Shield, UserCheck, RefreshCw } from 'lucide-react';
+import { isDemoEmail, WORKING_ACCOUNTS } from '../../../api/auth';
 import './AdminUsersPage.css';
 
-const DEFAULT_CLINICIANS = ['Caregiver Clinician', 'Dr. Sarah Mitchell', 'Dr. Alex Vance'];
+const DEFAULT_CLINICIANS = ['souju', 'praveen', 'Ram'];
 
 export function AdminUsersPage() {
   const { user: currentUser } = useAuth();
@@ -20,11 +21,14 @@ export function AdminUsersPage() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          list = parsed;
+          list = parsed.filter((u) => !isDemoEmail(u.email));
         }
       }
     } catch (e) {
       console.error(e);
+    }
+    if (list.length === 0) {
+      list = [...WORKING_ACCOUNTS];
     }
     return list;
   });
@@ -46,12 +50,13 @@ export function AdminUsersPage() {
     try {
       const res = await apiClient.get('/auth/users/');
       if (Array.isArray(res.data) && res.data.length > 0) {
-        const backendUsers = res.data;
+        const backendUsers = res.data.filter((u) => !isDemoEmail(u.email));
 
         setUsers((prev) => {
-          // Merge backendUsers with prev, keeping server as source of truth
+          // Merge backendUsers with prev, keeping server as source of truth and pruning demo accounts
+          const cleanPrev = prev.filter((p) => !isDemoEmail(p.email));
           const merged = [...backendUsers];
-          for (const localU of prev) {
+          for (const localU of cleanPrev) {
             const exists = merged.some(
               (m) =>
                 (m.id && localU.id && String(m.id) === String(localU.id)) ||
@@ -74,6 +79,7 @@ export function AdminUsersPage() {
           const rawPatients = localStorage.getItem('pillsync_assigned_patients');
           let currentPatients = rawPatients ? JSON.parse(rawPatients) : [];
           if (!Array.isArray(currentPatients)) currentPatients = [];
+          currentPatients = currentPatients.filter((p) => !isDemoEmail(p.email));
 
           const serverPatients = backendUsers.filter(
             (u) => (u.role || '').toLowerCase() === 'patient' && u.assignedCaregiver !== 'Unassigned'
@@ -101,7 +107,7 @@ export function AdminUsersPage() {
                 prescriptionsCount: 1,
                 phone: '+1 555-0190',
                 lastTaken: 'Today',
-                assignedCaregiver: sp.assignedCaregiver || 'Caregiver Clinician',
+                assignedCaregiver: sp.assignedCaregiver || 'souju',
               });
               changed = true;
             }
@@ -244,7 +250,7 @@ export function AdminUsersPage() {
     const emailTrim = newUser.email.trim().toLowerCase();
     const nameTrim = newUser.name.trim();
     const assignedCaregiver =
-      newUser.role === 'patient' ? 'Caregiver Clinician' : 'System Admin';
+      newUser.role === 'patient' ? 'souju' : 'System Admin';
 
     let created = {
       id: `u-${Date.now()}`,

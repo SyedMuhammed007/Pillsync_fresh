@@ -22,9 +22,10 @@ import {
   ShieldCheck,
   RefreshCw,
 } from 'lucide-react';
+import { isDemoEmail } from '../../../api/auth';
 import './PatientsPage.css';
 
-const DEFAULT_CLINICIANS = ['Caregiver Clinician', 'Dr. Sarah Mitchell', 'Dr. Alex Vance'];
+const DEFAULT_CLINICIANS = ['souju', 'praveen', 'Ram'];
 
 function loadMergedPatients() {
   let assigned = [];
@@ -32,7 +33,7 @@ function loadMergedPatients() {
     const rawAssigned = localStorage.getItem('pillsync_assigned_patients');
     if (rawAssigned) {
       const parsed = JSON.parse(rawAssigned);
-      if (Array.isArray(parsed)) assigned = parsed;
+      if (Array.isArray(parsed)) assigned = parsed.filter((p) => !isDemoEmail(p.email));
     }
   } catch (err) {
     console.error(err);
@@ -43,7 +44,7 @@ function loadMergedPatients() {
     const rawUsers = localStorage.getItem('pillsync_registered_users');
     if (rawUsers) {
       const parsedUsers = JSON.parse(rawUsers);
-      if (Array.isArray(parsedUsers)) registered = parsedUsers;
+      if (Array.isArray(parsedUsers)) registered = parsedUsers.filter((u) => !isDemoEmail(u.email));
     }
   } catch (err) {
     console.error(err);
@@ -51,6 +52,7 @@ function loadMergedPatients() {
 
   const patientUsers = registered.filter(
     (u) =>
+      !isDemoEmail(u.email) &&
       (u.role || 'patient').toLowerCase() === 'patient' &&
       u.assignedCaregiver &&
       u.assignedCaregiver !== 'Unassigned'
@@ -144,7 +146,7 @@ export function PatientsPage() {
     try {
       const res = await apiClient.get('/auth/users/');
       if (Array.isArray(res.data) && res.data.length > 0) {
-        const serverUsers = res.data;
+        const serverUsers = res.data.filter((u) => !isDemoEmail(u.email));
         setRegisteredUsers(serverUsers);
         try {
           localStorage.setItem('pillsync_registered_users', JSON.stringify(serverUsers));
@@ -158,7 +160,7 @@ export function PatientsPage() {
         );
 
         setPatients((prev) => {
-          const merged = [...prev];
+          const merged = prev.filter((p) => !isDemoEmail(p.email));
           let changed = false;
 
           for (const sp of serverPatients) {

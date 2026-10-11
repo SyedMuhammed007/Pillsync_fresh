@@ -31,6 +31,7 @@ import { reminderApi } from '../api/reminders';
 import { apiClient } from '../api/client';
 import { getScopedStorage, setScopedStorage } from '../utils/userStorage';
 import { getCohortPatients, isPatientAssignedToCaregiver } from '../utils/cohort';
+import { isDemoEmail, WORKING_ACCOUNTS } from '../api/auth';
 import './DashboardPage.css';
 
 function getAdminRegisteredUsers() {
@@ -38,12 +39,15 @@ function getAdminRegisteredUsers() {
     const raw = localStorage.getItem('pillsync_registered_users');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const clean = parsed.filter((u) => !isDemoEmail(u.email));
+        if (clean.length > 0) return clean;
+      }
     }
   } catch (err) {
     console.error(err);
   }
-  return [];
+  return [...WORKING_ACCOUNTS];
 }
 
 function getAdminPlatformTelemetry(userCount) {
@@ -97,9 +101,10 @@ export function DashboardPage() {
         .get('/auth/users/')
         .then((res) => {
           if (Array.isArray(res.data) && res.data.length > 0) {
-            setAdminUsers(res.data);
+            const cleanUsers = res.data.filter((u) => !isDemoEmail(u.email));
+            setAdminUsers(cleanUsers);
             try {
-              localStorage.setItem('pillsync_registered_users', JSON.stringify(res.data));
+              localStorage.setItem('pillsync_registered_users', JSON.stringify(cleanUsers));
             } catch {}
           }
         })
