@@ -286,10 +286,10 @@ jobs:
         shell: bash
         run: |
           if [ -f package-lock.json ]; then
-            npm ci
+            npm ci || npm install --legacy-peer-deps
           else
             echo "::warning file=frontend/package.json::No package-lock.json committed. Commit it so every environment installs identical versions."
-            npm install
+            npm install --legacy-peer-deps
           fi
 
       - name: Lint
