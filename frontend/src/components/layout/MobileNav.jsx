@@ -28,7 +28,7 @@ export function MobileNav({ onOpenMenu }) {
   const { user } = useAuth();
   const location = useLocation();
 
-  const userRole = user?.role || 'patient';
+  const userRole = (user?.role || 'patient').toLowerCase();
   const quickItems = ROLE_QUICK_NAV[userRole] || ROLE_QUICK_NAV.patient;
 
   return (

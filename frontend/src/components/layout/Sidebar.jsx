@@ -62,7 +62,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }) {
     navigate('/login');
   };
 
-  const userRole = user?.role || 'patient';
+  const userRole = (user?.role || 'patient').toLowerCase();
   const navItems = NAVIGATION_BY_ROLE[userRole] || NAVIGATION_BY_ROLE.patient;
   const homePortalPath =
     userRole === 'caregiver'

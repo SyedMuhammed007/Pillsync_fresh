@@ -11,7 +11,7 @@ export function Layout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
-  const userRole = user?.role || 'patient';
+  const userRole = (user?.role || 'patient').toLowerCase();
   const homePortalPath =
     userRole === 'caregiver'
       ? '/caregiver/portal'

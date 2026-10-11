@@ -48,7 +48,12 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+  const currentRole = (user?.role || '').toLowerCase();
+  const isAllowed =
+    allowedRoles.length === 0 ||
+    allowedRoles.some((r) => r.toLowerCase() === currentRole);
+
+  if (!isAllowed) {
     return (
       <div className="access-denied-wrapper">
         <div className="access-denied-card">

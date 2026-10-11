@@ -28,6 +28,7 @@ import { getChatbotResponse } from '../utils/chatbotEngine';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { medicationApi } from '../api/medications';
 import { reminderApi } from '../api/reminders';
+import { apiClient } from '../api/client';
 import { getScopedStorage, setScopedStorage } from '../utils/userStorage';
 import { getCohortPatients, isPatientAssignedToCaregiver } from '../utils/cohort';
 import './DashboardPage.css';
@@ -1016,7 +1017,7 @@ export function DashboardPage() {
                 <div>
                   <p className="dashboard-kpi-label">Active Caregivers</p>
                   <p className="dashboard-kpi-value text-emerald-600">
-                    {adminUsers.filter((u) => u.role === 'caregiver').length}
+                    {adminUsers.filter((u) => (u.role || '').toLowerCase() === 'caregiver').length}
                   </p>
                   <p className="dashboard-kpi-meta text-emerald-600 font-semibold">
                     Clinical coordinators active
@@ -1154,8 +1155,9 @@ export function DashboardPage() {
                         .join('')
                         .slice(0, 2)
                         .toUpperCase();
-                      const isCaregiver = u.role === 'caregiver';
-                      const isAdmin = u.role === 'admin';
+                      const roleStr = (u.role || '').toLowerCase();
+                      const isCaregiver = roleStr === 'caregiver';
+                      const isAdmin = roleStr === 'admin';
                       return (
                         <div key={u.id || u.email} className="admin-user-row">
                           <div className="flex items-center gap-3">

@@ -4,7 +4,7 @@ import { useAuth } from '../context/useAuth';
 
 function DashboardRedirect() {
   const { user } = useAuth();
-  const role = user?.role || 'patient';
+  const role = (user?.role || 'patient').toLowerCase();
   if (role === 'caregiver') return <Navigate to="/caregiver/portal" replace />;
   if (role === 'admin') return <Navigate to="/admin/portal" replace />;
   return <Navigate to="/patient/portal" replace />;
