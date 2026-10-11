@@ -19,6 +19,12 @@ import {
 import { isValidEmail } from '../../../utils/validation';
 import './LoginPage.css';
 
+const getDashboardPath = (role) => {
+  if (role === 'caregiver') return '/caregiver/portal';
+  if (role === 'admin') return '/admin/portal';
+  return '/patient/portal';
+};
+
 export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,6 +46,30 @@ export function LoginPage() {
 
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [validationErrors, setValidationErrors] = useState({});
+
+  const handleQuickDemo = async (role) => {
+    setSelectedRole(role);
+    let demoEmail = 'patient@example.com';
+    let demoPass = 'password123';
+    if (role === 'caregiver') {
+      demoEmail = 'caregiver@example.com';
+    } else if (role === 'admin') {
+      demoEmail = 'admin@example.com';
+    }
+    setFormData({ email: demoEmail, password: demoPass });
+    setIsAuthenticating(true);
+    setError(null);
+    setRoleMismatch(null);
+    try {
+      await login(demoEmail, demoPass, role);
+      navigate(getDashboardPath(role));
+    } catch (err) {
+      console.error('Demo login error:', err);
+      setError(err.message || 'Demo login failed');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -283,6 +313,47 @@ export function LoginPage() {
           {error && (
             <Alert type="danger" message={error} onClose={() => setError(null)} className="mb-4" />
           )}
+
+          {/* Quick Demo One-Click Access */}
+          <div className="login-quick-demo-wrapper">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-teal-600" /> Quick Demo Sign In
+              </span>
+              <span className="text-[10px] text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full font-bold border border-teal-200">
+                1-Click Access
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('patient')}
+                className={`login-quick-demo-btn ${selectedRole === 'patient' ? 'quick-demo-active' : ''}`}
+                title="Instant Sign In as Demo Patient (patient@example.com)"
+              >
+                <User className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Patient</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('caregiver')}
+                className={`login-quick-demo-btn ${selectedRole === 'caregiver' ? 'quick-demo-active' : ''}`}
+                title="Instant Sign In as Demo Caregiver (caregiver@example.com)"
+              >
+                <Stethoscope className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Caregiver</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickDemo('admin')}
+                className={`login-quick-demo-btn ${selectedRole === 'admin' ? 'quick-demo-active' : ''}`}
+                title="Instant Sign In as Demo Administrator (admin@example.com)"
+              >
+                <Shield className="h-3.5 w-3.5 text-teal-600" />
+                <span>Admin</span>
+              </button>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="login-form-body">
             {/* Email Field */}

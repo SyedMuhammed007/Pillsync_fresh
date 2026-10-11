@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-// Create axios instance with default config
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000/api'
+    : '/api');
+
 const USE_MOCK_API =
   import.meta.env.VITE_USE_MOCK_API === undefined
     ? true
@@ -9,7 +14,7 @@ const USE_MOCK_API =
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 8000,
   headers: {
     'Content-Type': 'application/json',
   },
