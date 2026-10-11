@@ -7,42 +7,8 @@ import { Badge } from '../../../components/common/Badge';
 import { EmptyState, CardSkeleton, Alert } from '../../../components/common';
 import { Clock, CheckCircle, Calendar, Users, Phone, Bell, ShieldCheck } from 'lucide-react';
 import { playDoseAlertChime, dispatchNativeDoseAlert } from '../../../utils/audioChime';
+import { getCohortPatientNames } from '../../../utils/cohort';
 import './RemindersPage.css';
-
-function getCohortPatients() {
-  try {
-    const raw = localStorage.getItem('pillsync_assigned_patients');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return ['All Patients', ...parsed.map((p) => p.name)];
-      }
-    }
-  } catch (e) {
-    console.error(e);
-  }
-
-  try {
-    const rawUsers = localStorage.getItem('pillsync_registered_users');
-    if (rawUsers) {
-      const users = JSON.parse(rawUsers);
-      if (Array.isArray(users)) {
-        const patients = users.filter(
-          (u) =>
-            (u.role || 'patient').toLowerCase() === 'patient' &&
-            u.assignedCaregiver !== 'Unassigned'
-        );
-        if (patients.length > 0) {
-          return ['All Patients', ...patients.map((p) => p.name)];
-        }
-      }
-    }
-  } catch (e) {
-    console.error(e);
-  }
-
-  return ['All Patients'];
-}
 
 export function RemindersPage() {
   const { user } = useAuth();
@@ -55,7 +21,11 @@ export function RemindersPage() {
 
   const userRole = user?.role || 'patient';
   const isCaregiver = userRole === 'caregiver' || userRole === 'admin';
-  const [cohortPatients] = useState(getCohortPatients);
+  const [cohortPatients, setCohortPatients] = useState(() => getCohortPatientNames(user));
+
+  useEffect(() => {
+    setCohortPatients(getCohortPatientNames(user));
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;

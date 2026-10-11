@@ -18,40 +18,7 @@ const DISEASE_CATEGORIES = [
   'Heart Medications',
 ];
 
-function getCohortPatientFilters() {
-  try {
-    const raw = localStorage.getItem('pillsync_assigned_patients');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return ['All Patients', ...parsed.map((p) => p.name)];
-      }
-    }
-  } catch (e) {
-    console.error(e);
-  }
-
-  try {
-    const rawUsers = localStorage.getItem('pillsync_registered_users');
-    if (rawUsers) {
-      const users = JSON.parse(rawUsers);
-      if (Array.isArray(users)) {
-        const patients = users.filter(
-          (u) =>
-            (u.role || 'patient').toLowerCase() === 'patient' &&
-            u.assignedCaregiver !== 'Unassigned'
-        );
-        if (patients.length > 0) {
-          return ['All Patients', ...patients.map((p) => p.name)];
-        }
-      }
-    }
-  } catch (e) {
-    console.error(e);
-  }
-
-  return ['All Patients'];
-}
+import { getCohortPatients, getCohortPatientNames } from '../../../utils/cohort';
 
 export function MedicationsPage() {
   const { user } = useAuth();
@@ -63,15 +30,64 @@ export function MedicationsPage() {
   const [selectedDisease, setSelectedDisease] = useState('All');
   const [selectedPatient, setSelectedPatient] = useState('All Patients');
 
-  const userRole = user?.role || 'patient';
+  const userRole = (user?.role || 'patient').toLowerCase();
   const isCaregiver = userRole === 'caregiver' || userRole === 'admin';
-  const [cohortPatientFilters] = useState(getCohortPatientFilters);
+  const [cohortPatientFilters, setCohortPatientFilters] = useState(() => getCohortPatientNames(user));
+
+  useEffect(() => {
+    setCohortPatientFilters(getCohortPatientNames(user));
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadMedications = async () => {
       try {
+        if (userRole === 'caregiver') {
+          const cohort = getCohortPatients(user);
+          const allCohortMeds = [];
+          cohort.forEach((p) => {
+            const pKey = p.email ? p.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+            let pMeds = [];
+            try {
+              const raw = localStorage.getItem(`pillsync_patient_medications_${pKey}`);
+              if (raw) pMeds = JSON.parse(raw);
+            } catch {}
+
+            if (!Array.isArray(pMeds) || pMeds.length === 0) {
+              const isHyper = p.condition?.toLowerCase().includes('hypertension');
+              pMeds = [
+                {
+                  id: `med-${p.id || p.name}-1`,
+                  name: isHyper ? 'Lisinopril' : 'Metformin HCl',
+                  condition: p.condition || 'General Monitoring',
+                  disease: isHyper ? 'Hypertension' : 'Diabetes',
+                  dosage: isHyper ? '10mg' : '500mg',
+                  form: 'Oral Tablet',
+                  frequency: isHyper ? 'Once daily (Morning)' : 'Twice daily',
+                  schedule: isHyper ? ['08:00 AM'] : ['08:00 AM', '08:00 PM'],
+                  instructions: 'Take with or immediately after meals',
+                  quantity: 60,
+                  status: 'active',
+                },
+              ];
+            }
+
+            pMeds.forEach((m) => {
+              allCohortMeds.push({
+                ...m,
+                patient: p.name,
+                patientEmail: p.email,
+              });
+            });
+          });
+
+          if (!cancelled) {
+            setMedications(allCohortMeds);
+          }
+          return;
+        }
+
         const data = await medicationApi.getMedications();
         if (!cancelled) {
           setMedications(data || []);
@@ -90,7 +106,8 @@ export function MedicationsPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email]);
+  }, [user?.id, user?.email, userRole]);
+
 
   const displayedList = medications;
 

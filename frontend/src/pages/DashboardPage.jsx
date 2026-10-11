@@ -29,54 +29,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { medicationApi } from '../api/medications';
 import { reminderApi } from '../api/reminders';
 import { getScopedStorage, setScopedStorage } from '../utils/userStorage';
+import { getCohortPatients, isPatientAssignedToCaregiver } from '../utils/cohort';
 import './DashboardPage.css';
-
-// Dynamic cohort patients loader with fallback to registered patient accounts
-function getCohortPatients() {
-  try {
-    const raw = localStorage.getItem('pillsync_assigned_patients');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (err) {
-    console.error(err);
-  }
-
-  // Fallback to registered patients
-  try {
-    const rawUsers = localStorage.getItem('pillsync_registered_users');
-    if (rawUsers) {
-      const users = JSON.parse(rawUsers);
-      if (Array.isArray(users)) {
-        const patients = users.filter(
-          (u) =>
-            (u.role || 'patient').toLowerCase() === 'patient' &&
-            u.assignedCaregiver !== 'Unassigned'
-        );
-        if (patients.length > 0) {
-          return patients.map((u) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            condition: u.condition || 'General Monitoring',
-            age: u.age || 48,
-            gender: u.gender || 'Patient',
-            adherence: u.adherence || 94,
-            prescriptionsCount: u.prescriptionsCount || 1,
-            phone: u.phone || '+1 555-0190',
-            lastTaken: 'Today',
-            assignedCaregiver: u.assignedCaregiver || 'Caregiver Clinician',
-          }));
-        }
-      }
-    }
-  } catch (err) {
-    console.error(err);
-  }
-
-  return [];
-}
 
 function getAdminRegisteredUsers() {
   try {
@@ -127,7 +81,13 @@ export function DashboardPage() {
   }, [chatMessages, isTyping]);
   const [userMeds, setUserMeds] = useState([]);
   const [doses, setDoses] = useState([]);
-  const [cohortPatients] = useState(() => getCohortPatients());
+  const userRole = (user?.role || 'patient').toLowerCase();
+  const [cohortPatients, setCohortPatients] = useState(() => getCohortPatients(user));
+
+  useEffect(() => {
+    setCohortPatients(getCohortPatients(user));
+  }, [user]);
+
   const [adminUsers] = useState(() => getAdminRegisteredUsers());
   const [patientCheckedIn, setPatientCheckedIn] = useState(() => {
     try {
@@ -157,9 +117,117 @@ export function DashboardPage() {
     setTimeout(() => setCheckinToast(''), 4500);
   };
 
-  // Load real user medications from local API and auto-generate dose schedule with persistent status
+  // Load real user medications from local API or assigned cohort schedule for caregivers
   useEffect(() => {
     let cancelled = false;
+
+    // For Caregiver: generate doses strictly across their assigned cohort patients
+    if (userRole === 'caregiver') {
+      const cohort = getCohortPatients(user);
+      const cohortDoses = [];
+      let idx = 1;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+
+      cohort.forEach((p) => {
+        const pKey = p.email ? p.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+        let pMeds = [];
+        try {
+          const rawMeds = localStorage.getItem(`pillsync_patient_medications_${pKey}`);
+          if (rawMeds) pMeds = JSON.parse(rawMeds);
+        } catch {}
+
+        if (!Array.isArray(pMeds) || pMeds.length === 0) {
+          const defaultDrug = p.condition?.toLowerCase().includes('hypertension')
+            ? { name: 'Lisinopril', dosage: '10mg', freq: 'Once daily (Morning)', schedule: ['08:00 AM'] }
+            : { name: 'Metformin HCl', dosage: '500mg', freq: 'Twice daily', schedule: ['08:00 AM', '08:00 PM'] };
+          pMeds = [
+            {
+              id: `med-${p.id || p.name}-1`,
+              name: defaultDrug.name,
+              dosage: defaultDrug.dosage,
+              schedule: defaultDrug.schedule,
+              instructions: 'Take with or immediately after meals',
+            },
+          ];
+        }
+
+        let pStoredDoses = [];
+        try {
+          const rawDoses = localStorage.getItem(`pillsync_patient_doses_${pKey}`);
+          if (rawDoses) pStoredDoses = JSON.parse(rawDoses);
+        } catch {}
+
+        pMeds.forEach((med) => {
+          const schedules = Array.isArray(med.schedule) && med.schedule.length > 0 ? med.schedule : ['08:00 AM'];
+          schedules.forEach((timeStr) => {
+            const isPM = timeStr.includes('PM');
+            let windowName = 'Morning';
+            if (isPM && !timeStr.startsWith('12')) {
+              windowName =
+                timeStr.startsWith('08') || timeStr.startsWith('09') || timeStr.startsWith('10')
+                  ? 'Night'
+                  : 'Evening';
+            } else if (isPM || timeStr.startsWith('12')) {
+              windowName = 'Afternoon';
+            }
+
+            const doseKey = `${p.id || p.name}-${med.name}-${timeStr}`;
+            let isPastTime = false;
+            try {
+              const [timePart, modifier] = timeStr.split(' ');
+              let [hours, minutes] = timePart.split(':').map(Number);
+              if (modifier === 'PM' && hours < 12) hours += 12;
+              if (modifier === 'AM' && hours === 12) hours = 0;
+              const scheduledDate = new Date();
+              scheduledDate.setHours(hours, minutes || 0, 0, 0);
+              if (now > scheduledDate) isPastTime = true;
+            } catch {}
+
+            let status = isPastTime ? 'missed' : 'upcoming';
+            let takenAt = undefined;
+
+            const existingRecord = pStoredDoses.find(
+              (d) =>
+                (d.doseKey && d.doseKey === doseKey) ||
+                (d.medName && d.medName.trim().toLowerCase() === med.name.trim().toLowerCase() && d.time === timeStr)
+            );
+
+            if (existingRecord) {
+              const recordDate =
+                existingRecord.date ||
+                (existingRecord.takenAt ? existingRecord.takenAt.split('T')[0] : null);
+              if (!recordDate || recordDate === todayStr) {
+                status = existingRecord.status || (isPastTime ? 'missed' : 'upcoming');
+                takenAt = existingRecord.takenAt;
+              }
+            }
+
+            cohortDoses.push({
+              id: idx,
+              doseKey,
+              patient: p.name,
+              patientEmail: p.email,
+              medId: med.id,
+              medName: med.name,
+              time: timeStr,
+              window: windowName,
+              med: `${med.name} ${med.dosage || ''}`,
+              instruction: med.instructions || 'Daily dose',
+              status,
+              takenAt,
+            });
+            idx++;
+          });
+        });
+      });
+
+      if (!cancelled) {
+        setDoses(cohortDoses);
+      }
+      return;
+    }
+
     const fetchMeds = async () => {
       try {
         const data = await medicationApi.getMedications();
@@ -267,7 +335,8 @@ export function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email]);
+  }, [user?.id, user?.email, userRole, cohortPatients.length]);
+
 
   // Live real-time clock ticker
   useEffect(() => {
@@ -276,8 +345,6 @@ export function DashboardPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const userRole = user?.role || 'patient';
 
   const getDefaultName = () => {
     if (userRole === 'caregiver') return 'Clinical Caregiver';

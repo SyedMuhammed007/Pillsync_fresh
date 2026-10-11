@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../../context/useAuth';
+import { isPatientAssignedToCaregiver } from '../../../utils/cohort';
 import { Layout } from '../../../components/layout';
 import { Badge } from '../../../components/common/Badge';
 import { Button } from '../../../components/common/Button';
@@ -95,6 +97,11 @@ function loadMergedPatients() {
 }
 
 export function PatientsPage() {
+  const { user } = useAuth();
+  const userRole = (user?.role || '').toLowerCase();
+  const isCaregiver = userRole === 'caregiver';
+  const isAdmin = userRole === 'admin';
+
   const [patients, setPatients] = useState(loadMergedPatients);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRisk, setSelectedRisk] = useState('all');
@@ -114,7 +121,7 @@ export function PatientsPage() {
     adherence: 95,
     prescriptionsCount: 2,
     phone: '+1 555-0192',
-    assignedCaregiver: 'Caregiver Clinician',
+    assignedCaregiver: user?.name || user?.email?.split('@')[0] || 'Caregiver Clinician',
   });
 
   const [registeredUsers, setRegisteredUsers] = useState(() => {
@@ -428,13 +435,18 @@ export function PatientsPage() {
     showToast(`Caregiver taking care updated to: ${newCaregiver}`);
   };
 
-  const filteredPatients = patients.filter((p) => {
+  const baseCohort = isCaregiver
+    ? patients.filter((p) => isPatientAssignedToCaregiver(p, user))
+    : patients;
+
+  const filteredPatients = baseCohort.filter((p) => {
     const matchesSearch =
       p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.condition?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.assignedCaregiver?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCaregiver =
+      !isAdmin ||
       selectedCaregiver === 'all' ||
       p.assignedCaregiver?.toLowerCase() === selectedCaregiver.toLowerCase();
 
@@ -448,12 +460,12 @@ export function PatientsPage() {
     return matchesSearch;
   });
 
-  const highRiskCount = patients.filter((p) => p.adherence < 70).length;
+  const highRiskCount = baseCohort.filter((p) => p.adherence < 70).length;
   const avgAdherence =
-    patients.length > 0
+    baseCohort.length > 0
       ? Math.round(
-          patients.reduce((acc, p) => acc + (p.adherence || 100), 0) /
-            patients.length
+          baseCohort.reduce((acc, p) => acc + (p.adherence || 100), 0) /
+            baseCohort.length
         )
       : 100;
 
@@ -470,7 +482,7 @@ export function PatientsPage() {
             <div className="patients-title-row">
               <h1 className="patients-title">Assigned Patients Portal</h1>
               <Badge variant="primary" size="sm">
-                {patients.length} Monitored Live
+                {baseCohort.length} {isCaregiver ? 'Assigned' : 'Monitored Live'}
               </Badge>
               {highRiskCount > 0 && (
                 <Badge variant="danger" size="sm">
@@ -573,35 +585,44 @@ export function PatientsPage() {
           </div>
 
           {/* Caregiver Filter Selection */}
-          <div className="flex items-center gap-2 overflow-x-auto py-1">
-            <span className="text-xs font-bold text-slate-600 shrink-0">Filter by Caregiver:</span>
-            <select
-              value={selectedCaregiver}
-              onChange={(e) => setSelectedCaregiver(e.target.value)}
-              className="text-xs font-bold text-indigo-700 bg-white border border-slate-200 rounded-xl px-3 py-1.5 outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
-            >
-              <option value="all">All Caregivers ({patients.length})</option>
-              {caregiverOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c} ({patients.filter((p) => p.assignedCaregiver?.toLowerCase() === c.toLowerCase()).length})
-                </option>
-              ))}
-            </select>
-          </div>
+          {isAdmin ? (
+            <div className="flex items-center gap-2 overflow-x-auto py-1">
+              <span className="text-xs font-bold text-slate-600 shrink-0">Filter by Caregiver:</span>
+              <select
+                value={selectedCaregiver}
+                onChange={(e) => setSelectedCaregiver(e.target.value)}
+                className="text-xs font-bold text-indigo-700 bg-white border border-slate-200 rounded-xl px-3 py-1.5 outline-none focus:border-indigo-500 shadow-2xs cursor-pointer"
+              >
+                <option value="all">All Caregivers ({patients.length})</option>
+                {caregiverOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c} ({patients.filter((p) => p.assignedCaregiver?.toLowerCase() === c.toLowerCase()).length})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 overflow-x-auto py-1">
+              <span className="text-xs font-bold text-slate-600 shrink-0">Assigned Caregiver:</span>
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 shadow-2xs">
+                {user?.name || user?.email} ({baseCohort.length} {baseCohort.length === 1 ? 'Patient' : 'Patients'})
+              </span>
+            </div>
+          )}
 
           <div className="patients-filter-bar">
             {[
-              { id: 'all', label: 'All Patients', count: patients.length },
+              { id: 'all', label: isCaregiver ? 'Assigned Patients' : 'All Patients', count: baseCohort.length },
               { id: 'high_risk', label: 'High Risk (<70%)', count: highRiskCount },
               {
                 id: 'moderate',
                 label: 'Moderate (70-85%)',
-                count: patients.filter((p) => p.adherence >= 70 && p.adherence < 85).length,
+                count: baseCohort.filter((p) => p.adherence >= 70 && p.adherence < 85).length,
               },
               {
                 id: 'adherent',
                 label: 'Compliant (>85%)',
-                count: patients.filter((p) => p.adherence >= 85).length,
+                count: baseCohort.filter((p) => p.adherence >= 85).length,
               },
             ].map((tab) => (
               <button
