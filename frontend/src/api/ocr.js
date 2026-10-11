@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { createWorker } from 'tesseract.js';
+import { parsePrescriptionText } from '../utils/prescriptionParser';
 
 function fallbackParseFromFilename(fileName) {
   if (!fileName) return null;
@@ -83,8 +85,50 @@ function fallbackParseFromFilename(fileName) {
 
 export const ocrApi = {
   scanPrescription: async (file) => {
+    // 1. Run browser-native client-side Tesseract.js (reliable across all devices & zero server dependencies)
+    let clientRawText = '';
+    let clientParsed = null;
+    try {
+      const worker = await createWorker('eng');
+      const ret = await worker.recognize(file);
+      clientRawText = (ret.data?.text || '').trim();
+      await worker.terminate();
+
+      if (clientRawText) {
+        clientParsed = parsePrescriptionText(clientRawText, file?.name);
+      }
+    } catch (tessErr) {
+      console.warn('Browser Tesseract OCR notice:', tessErr);
+    }
+
+    // If client-side OCR recognized valid medicine records, return immediately!
+    if (clientParsed && clientParsed.is_medicine) {
+      // Background sync to backend for centralized database telemetry
+      try {
+        const bgPayload = {
+          raw_text: clientRawText,
+          filename: file?.name || 'prescription.jpg',
+        };
+        axios
+          .post('https://pillsync-backend-w0my.onrender.com/api/ocr/', bgPayload, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 10000,
+          })
+          .catch(() => {});
+      } catch {}
+
+      return {
+        raw_text: clientRawText,
+        data: clientParsed,
+      };
+    }
+
+    // 2. If client OCR did not find medicines, query backend OCR endpoints
     const formData = new FormData();
     formData.append('image', file);
+    if (clientRawText) {
+      formData.append('raw_text', clientRawText);
+    }
 
     const token = localStorage.getItem('accessToken');
     const headers = {
@@ -117,12 +161,11 @@ export const ocrApi = {
           headers,
           timeout: 45000,
         });
-        if (response.data) {
+        if (response.data && response.data.data?.is_medicine) {
           return response.data;
         }
       } catch (err) {
         lastError = err;
-        // If 401 unauthorized due to stale/mock token, retry immediately without Authorization header
         if (err.response?.status === 401 && headers.Authorization) {
           try {
             const cleanHeaders = { 'Content-Type': 'multipart/form-data' };
@@ -130,39 +173,43 @@ export const ocrApi = {
               headers: cleanHeaders,
               timeout: 45000,
             });
-            if (retryRes.data) {
+            if (retryRes.data && retryRes.data.data?.is_medicine) {
               return retryRes.data;
             }
           } catch (retryErr) {
             lastError = retryErr;
           }
         }
-
-        // Only break if the backend explicitly returned a 422 clinical rejection
         if (lastError.response?.status === 422) {
           break;
         }
-        // If 405 (Vercel method not allowed), 404, or network timeout, continue to next endpoint!
       }
     }
 
-    // If backend rejection was 422, let the caller show the clinical error
-    if (lastError?.response?.status === 422) {
-      throw lastError;
+    // If client parsed partial medicine text, use it even if server failed
+    if (clientParsed && (clientParsed.medicines?.length > 0 || clientParsed.medicine_name)) {
+      return {
+        raw_text: clientRawText,
+        data: clientParsed,
+      };
     }
 
-    // Client-side fallback if network was blocked or servers asleep
+    // 3. Fallback from image filename metadata
     const fallback = fallbackParseFromFilename(file?.name);
     if (fallback) {
       return {
-        raw_text: 'Extracted from medication metadata and optical pre-scan.',
+        raw_text: clientRawText || 'Extracted from medication metadata and optical pre-scan.',
         data: fallback,
       };
     }
 
+    if (lastError?.response?.status === 422) {
+      throw lastError;
+    }
+
     throw (
       lastError ||
-      new Error('OCR recognition endpoint unreachable. Please verify network connection.')
+      new Error('Non-medication image: No prescription, dosage, or medicine packaging text found.')
     );
   },
 };
