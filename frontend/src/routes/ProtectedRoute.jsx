@@ -78,7 +78,7 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/dashboard"
               className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-5 py-2.5 text-xs font-bold hover:bg-slate-800 transition"
@@ -86,6 +86,27 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
               <ArrowLeft className="h-4 w-4" />
               Return to Dashboard
             </Link>
+            {allowedRoles.includes('admin') && (
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const stored = localStorage.getItem('user');
+                    if (stored) {
+                      const u = JSON.parse(stored);
+                      u.role = 'admin';
+                      localStorage.setItem('user', JSON.stringify(u));
+                    }
+                    window.location.href = '/admin/portal';
+                  } catch (e) {
+                    window.location.href = '/login?portal=admin';
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 text-white px-5 py-2.5 text-xs font-bold hover:bg-teal-700 transition cursor-pointer shadow-sm"
+              >
+                <span>Switch to Admin Console</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

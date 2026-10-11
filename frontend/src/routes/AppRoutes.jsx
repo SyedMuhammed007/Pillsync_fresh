@@ -182,6 +182,22 @@ export function AppRoutes() {
             </RoleBasedRoute>
           }
         />
+        <Route
+          path="/admin"
+          element={
+            <RoleBasedRoute allowedRoles={['admin']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <RoleBasedRoute allowedRoles={['admin']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
 
         {/* Caregiver & Admin Role-Protected Routes (Strictly Blocked for Patients) */}
         <Route

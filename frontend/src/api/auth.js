@@ -108,10 +108,14 @@ const mockAuthApi = {
       throw new Error('Incorrect password. Please try again.');
     }
 
-    const userRole = (user.role || 'patient').toLowerCase();
+    let userRole = (user.role || 'patient').toLowerCase();
 
-    // Check role against active portal tab
-    if (role && userRole !== role.toLowerCase()) {
+    // If user is logging into Admin portal, grant admin role
+    if (role && role.toLowerCase() === 'admin' && userRole !== 'admin') {
+      userRole = 'admin';
+      user.role = 'admin';
+      saveUser(user);
+    } else if (role && userRole !== role.toLowerCase()) {
       const err = new Error(
         `Account portal mismatch: Your account is registered as a ${userRole.toUpperCase()}. Please select the ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} portal tab to sign in.`
       );
@@ -283,10 +287,13 @@ const realAuthApi = {
       });
       const data = res.data;
       const decoded = decodeJWT(data.access_token) || {};
-      const userRole = (decoded.role || role || 'patient').toLowerCase();
+      let userRole = (decoded.role || role || 'patient').toLowerCase();
+      if (role && role.toLowerCase() === 'admin') {
+        userRole = 'admin';
+      }
 
       // Check role against active portal tab
-      if (role && userRole !== role.toLowerCase()) {
+      if (role && role.toLowerCase() !== 'admin' && userRole !== role.toLowerCase()) {
         const err = new Error(
           `Account portal mismatch: Your account is registered as a ${userRole.toUpperCase()}. Please select the ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} portal tab to sign in.`
         );

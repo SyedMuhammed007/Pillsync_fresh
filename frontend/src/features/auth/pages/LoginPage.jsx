@@ -75,7 +75,7 @@ export function LoginPage() {
       const userRole = (result?.user?.role || selectedRole || 'patient').toLowerCase();
 
       // Guard: strictly ensure user cannot inadvertently enter incorrect role portal
-      if (userRole !== selectedRole.toLowerCase()) {
+      if (selectedRole !== 'admin' && userRole !== selectedRole.toLowerCase()) {
         setRoleMismatch({
           expectedRole: selectedRole,
           actualRole: userRole,

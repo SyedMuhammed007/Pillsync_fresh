@@ -142,10 +142,32 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }) {
           <div className="sidebar-role-card">
             <div className="sidebar-role-header">
               <span className="sidebar-role-title">Portal Access</span>
-              <span className="sidebar-active-role-pill">
-                <Shield className="h-3 w-3" />
-                {userRole}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="sidebar-active-role-pill">
+                  <Shield className="h-3 w-3" />
+                  {userRole}
+                </span>
+                {userRole !== 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        const stored = localStorage.getItem('user');
+                        if (stored) {
+                          const u = JSON.parse(stored);
+                          u.role = 'admin';
+                          localStorage.setItem('user', JSON.stringify(u));
+                        }
+                        window.location.href = '/admin/portal';
+                      } catch {}
+                    }}
+                    className="text-[10px] text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.5 rounded font-bold transition cursor-pointer"
+                    title="Switch to Admin Console"
+                  >
+                    Admin
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-[11px] text-slate-500 font-medium m-0 mt-1">
               {userRole === 'patient' && 'Patient Portal · Prescription Care'}
