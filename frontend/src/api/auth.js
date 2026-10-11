@@ -268,28 +268,13 @@ const mockAuthApi = {
 const realAuthApi = {
   login: async (email, password, role) => {
     const normalizedEmail = (email || '').trim().toLowerCase();
-
-    // 1. Instant check for local & demo users
     const localUsers = getRegisteredUsers();
     const localUser = localUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
 
     const isLocalPasswordValid =
       localUser && (!localUser.password || localUser.password === password);
 
-    if (isLocalPasswordValid) {
-      // Fire backend login in background so backend session/audit is updated if reachable
-      apiClient
-        .post('/auth/login/', {
-          email: normalizedEmail,
-          password,
-          role: role ? role.toUpperCase() : undefined,
-        })
-        .catch(() => {});
-
-      return await mockAuthApi.login(normalizedEmail, password, role);
-    }
-
-    // 2. Otherwise try backend database login
+    // 1. Try backend database login first so we get authentic JWT
     try {
       const res = await apiClient.post('/auth/login/', {
         email: normalizedEmail,
@@ -313,13 +298,12 @@ const realAuthApi = {
       }
 
       const loggedInUser = {
-        id: decoded.user_id || 'u-db',
+        id: decoded.user_id || localUser?.id || 'u-db',
         email: normalizedEmail,
-        name: decoded.full_name || normalizedEmail.split('@')[0],
+        name: decoded.full_name || localUser?.name || normalizedEmail.split('@')[0],
         role: userRole,
       };
 
-      // Always save to local storage as well so local roster and admin views have them
       saveUser({
         ...loggedInUser,
         password,
@@ -331,7 +315,6 @@ const realAuthApi = {
         user: loggedInUser,
       };
     } catch (backendErr) {
-      // If role mismatch was thrown or detected by backend
       if (backendErr.roleMismatch) {
         throw backendErr;
       }
@@ -344,18 +327,15 @@ const realAuthApi = {
         throw err;
       }
 
-      // If backend check failed, check if user exists in local registered accounts
-      if (localUser) {
+      // If local user exists with valid credentials (e.g. offline fallback, local admin), use local login
+      if (isLocalPasswordValid) {
         return await mockAuthApi.login(normalizedEmail, password, role);
       }
 
-      // If user does not exist in backend and does not exist locally
       if (backendErr.response?.data?.detail) {
-        throw new Error(backendErr.response.data.detail, { cause: backendErr });
+        throw new Error(backendErr.response.data.detail);
       }
-      throw new Error('No account found with this email. Please sign up first before signing in.', {
-        cause: backendErr,
-      });
+      throw backendErr;
     }
   },
 
