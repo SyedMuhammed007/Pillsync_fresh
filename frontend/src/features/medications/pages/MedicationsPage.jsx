@@ -54,23 +54,8 @@ export function MedicationsPage() {
               if (raw) pMeds = JSON.parse(raw);
             } catch {}
 
-            if (!Array.isArray(pMeds) || pMeds.length === 0) {
-              const isHyper = p.condition?.toLowerCase().includes('hypertension');
-              pMeds = [
-                {
-                  id: `med-${p.id || p.name}-1`,
-                  name: isHyper ? 'Lisinopril' : 'Metformin HCl',
-                  condition: p.condition || 'General Monitoring',
-                  disease: isHyper ? 'Hypertension' : 'Diabetes',
-                  dosage: isHyper ? '10mg' : '500mg',
-                  form: 'Oral Tablet',
-                  frequency: isHyper ? 'Once daily (Morning)' : 'Twice daily',
-                  schedule: isHyper ? ['08:00 AM'] : ['08:00 AM', '08:00 PM'],
-                  instructions: 'Take with or immediately after meals',
-                  quantity: 60,
-                  status: 'active',
-                },
-              ];
+            if (!Array.isArray(pMeds)) {
+              pMeds = [];
             }
 
             pMeds.forEach((m) => {

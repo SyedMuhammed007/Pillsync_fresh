@@ -45,20 +45,13 @@ const DEFAULT_PATIENT_MEDS = [
 
 // User-scoped storage: brand new patient accounts start fresh with 0 medications
 function getStoredMedications() {
-  const currentUser = getCurrentUser();
   const stored = getScopedStorage('pillsync_patient_medications', null);
 
   if (stored !== null && Array.isArray(stored)) {
     return stored;
   }
 
-  // Only seed default chronic care medications for the specific demo account
-  if (currentUser?.email?.toLowerCase() === 'patient@example.com') {
-    setScopedStorage('pillsync_patient_medications', DEFAULT_PATIENT_MEDS);
-    return DEFAULT_PATIENT_MEDS;
-  }
-
-  // All other patient accounts start completely clean at 0 medications
+  // All accounts start completely clean at 0 medications
   setScopedStorage('pillsync_patient_medications', []);
   return [];
 }

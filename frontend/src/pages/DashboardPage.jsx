@@ -137,19 +137,8 @@ export function DashboardPage() {
           if (rawMeds) pMeds = JSON.parse(rawMeds);
         } catch {}
 
-        if (!Array.isArray(pMeds) || pMeds.length === 0) {
-          const defaultDrug = p.condition?.toLowerCase().includes('hypertension')
-            ? { name: 'Lisinopril', dosage: '10mg', freq: 'Once daily (Morning)', schedule: ['08:00 AM'] }
-            : { name: 'Metformin HCl', dosage: '500mg', freq: 'Twice daily', schedule: ['08:00 AM', '08:00 PM'] };
-          pMeds = [
-            {
-              id: `med-${p.id || p.name}-1`,
-              name: defaultDrug.name,
-              dosage: defaultDrug.dosage,
-              schedule: defaultDrug.schedule,
-              instructions: 'Take with or immediately after meals',
-            },
-          ];
+        if (!Array.isArray(pMeds)) {
+          pMeds = [];
         }
 
         let pStoredDoses = [];

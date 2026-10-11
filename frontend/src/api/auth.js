@@ -13,34 +13,7 @@ const SYSTEM_ADMIN_USER = {
   avatar: 'https://ui-avatars.com/api/?name=Syed+Muhammed&background=0d9488&color=fff',
 };
 
-const DEFAULT_DEMO_USERS = [
-  {
-    id: 'u-patient-demo',
-    email: 'patient@example.com',
-    name: 'Demo Patient',
-    password: 'password123',
-    role: 'patient',
-    assignedCaregiver: 'Caregiver Clinician',
-    avatar: 'https://ui-avatars.com/api/?name=Demo+Patient&background=6366f1&color=fff',
-  },
-  {
-    id: 'u-caregiver-demo',
-    email: 'caregiver@example.com',
-    name: 'Caregiver Clinician',
-    password: 'password123',
-    role: 'caregiver',
-    avatar: 'https://ui-avatars.com/api/?name=Caregiver+Clinician&background=10b981&color=fff',
-  },
-  {
-    id: 'u-admin-demo',
-    email: 'admin@example.com',
-    name: 'Platform Administrator',
-    password: 'password123',
-    role: 'admin',
-    avatar: 'https://ui-avatars.com/api/?name=Admin&background=0d9488&color=fff',
-  },
-  SYSTEM_ADMIN_USER,
-];
+const DEFAULT_DEMO_USERS = [SYSTEM_ADMIN_USER];
 
 // Helper to get all registered users (local storage)
 function getRegisteredUsers() {
@@ -131,15 +104,7 @@ const mockAuthApi = {
     }
 
     // Validate password
-    const isDemoAccount = DEFAULT_DEMO_USERS.some(
-      (d) => d.email.toLowerCase() === normalizedEmail
-    );
-    const isValidPass =
-      user.password === password ||
-      (isDemoAccount &&
-        ['password123', 'password', '123456', 'admin', 'caregiver', 'patient', 'admin123', 'caregiver123', 'patient123'].includes(password));
-
-    if (user.password && !isValidPass) {
+    if (user.password && user.password !== password) {
       throw new Error('Incorrect password. Please try again.');
     }
 
@@ -213,7 +178,7 @@ const mockAuthApi = {
       password: data.password,
       name: data.name.trim(),
       role,
-      assignedCaregiver: role === 'patient' ? 'Caregiver Clinician' : undefined,
+      assignedCaregiver: role === 'patient' ? 'Unassigned' : undefined,
       avatar:
         'https://ui-avatars.com/api/?name=' +
         encodeURIComponent(data.name) +
@@ -221,37 +186,6 @@ const mockAuthApi = {
     };
 
     saveUser(newUser);
-
-    if (role === 'patient') {
-      try {
-        const raw = localStorage.getItem('pillsync_assigned_patients');
-        let pts = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(pts)) pts = [];
-        const exists = pts.some(
-          (p) =>
-            p.email?.toLowerCase() === normalizedEmail ||
-            p.name?.toLowerCase() === newUser.name.toLowerCase()
-        );
-        if (!exists) {
-          pts.unshift({
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            condition: 'General Monitoring',
-            age: 48,
-            gender: 'Patient',
-            adherence: 100,
-            prescriptionsCount: 0,
-            phone: data.phone || '+1 555-0190',
-            lastTaken: 'Not recorded yet',
-            assignedCaregiver: data.assignedCaregiver || 'Unassigned',
-          });
-          localStorage.setItem('pillsync_assigned_patients', JSON.stringify(pts));
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
 
     const accessToken = generateJWT(
       {
@@ -339,15 +273,8 @@ const realAuthApi = {
     const localUsers = getRegisteredUsers();
     const localUser = localUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
 
-    const isDemoAccount = DEFAULT_DEMO_USERS.some(
-      (d) => d.email.toLowerCase() === normalizedEmail
-    );
     const isLocalPasswordValid =
-      localUser &&
-      (!localUser.password ||
-        localUser.password === password ||
-        (isDemoAccount &&
-          ['password123', 'password', '123456', 'admin', 'caregiver', 'patient', 'admin123', 'caregiver123', 'patient123'].includes(password)));
+      localUser && (!localUser.password || localUser.password === password);
 
     if (isLocalPasswordValid) {
       // Fire backend login in background so backend session/audit is updated if reachable
@@ -457,37 +384,6 @@ const realAuthApi = {
         '&background=4f46e5&color=fff',
     };
     saveUser(localUser);
-
-    if (roleLower === 'patient') {
-      try {
-        const raw = localStorage.getItem('pillsync_assigned_patients');
-        let pts = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(pts)) pts = [];
-        const exists = pts.some(
-          (p) =>
-            p.email?.toLowerCase() === normalizedEmail ||
-            p.name?.toLowerCase() === localUser.name.toLowerCase()
-        );
-        if (!exists) {
-          pts.unshift({
-            id: localUser.id,
-            name: localUser.name,
-            email: localUser.email,
-            condition: 'General Monitoring',
-            age: 48,
-            gender: 'Patient',
-            adherence: 100,
-            prescriptionsCount: 0,
-            phone: data.phone || '+1 555-0190',
-            lastTaken: 'Not recorded yet',
-            assignedCaregiver: data.assignedCaregiver || 'Unassigned',
-          });
-          localStorage.setItem('pillsync_assigned_patients', JSON.stringify(pts));
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
 
     // 2. Also register with Django backend
     try {
