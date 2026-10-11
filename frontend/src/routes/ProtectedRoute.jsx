@@ -29,7 +29,7 @@ export function ProtectedRoute({ children }) {
 }
 
 export function RoleBasedRoute({ children, allowedRoles = [] }) {
-  const { user, loading, isAuthenticated, switchRole } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
 
   if (loading) {
     return (
@@ -78,26 +78,6 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
             </div>
           </div>
 
-          {/* Quick Demo Switcher if user wants to test allowed role */}
-          {allowedRoles.length > 0 && (
-            <div className="mt-4 border-t border-slate-100 pt-3">
-              <p className="text-[11px] text-slate-400 mb-2">
-                Want to test as an authorized persona?
-              </p>
-              <div className="flex justify-center gap-2">
-                {allowedRoles.map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => switchRole?.(role)}
-                    className="rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 text-xs font-bold capitalize transition cursor-pointer border border-indigo-200"
-                  >
-                    Switch to {role}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link
               to="/dashboard"
@@ -116,7 +96,7 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
 }
 
 export function PublicRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -129,10 +109,6 @@ export function PublicRoute({ children }) {
         </div>
       </div>
     );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
   }
 
   return children;

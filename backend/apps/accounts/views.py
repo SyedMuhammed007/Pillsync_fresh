@@ -27,6 +27,12 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        if request.data.get("role", "").upper() == "ADMIN":
+            return Response(
+                {"detail": "Administrator registration is restricted. Admin accounts can only sign in."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = UserRegisterSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -60,12 +66,33 @@ class LoginView(APIView):
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
 
-        user = User.objects.filter(email=email).first()
+        clean_email = email.strip().lower()
+        user = User.objects.filter(email__iexact=clean_email).first()
 
-        if user is None or not user.check_password(password):
+        if user is None:
             return Response(
-                {"detail": "Invalid email or password"},
+                {"detail": "No account found with this email. Please sign up first before signing in."},
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"detail": "Incorrect password. Please try again."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        requested_role = request.data.get("role")
+        if requested_role and requested_role.strip().upper() != user.role.upper():
+            return Response(
+                {
+                    "detail": (
+                        f"Account role mismatch: Your account is registered as a {user.role.title()}. "
+                        f"Please select the {user.role.title()} portal tab to continue."
+                    ),
+                    "registered_role": user.role.lower(),
+                    "requested_role": requested_role.strip().lower(),
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         refresh = RefreshToken.for_user(user)
@@ -152,3 +179,87 @@ class AdminOnlyView(APIView):
                 "role": request.user.role,
             }
         )
+
+
+class UserListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        users = User.objects.all().order_by("-id")
+        data = []
+        for u in users:
+            role_str = u.role.lower() if u.role else "patient"
+            data.append({
+                "id": u.id,
+                "email": u.email,
+                "name": u.full_name or u.email.split("@")[0],
+                "role": role_str,
+                "status": "Active" if u.is_active else "Suspended",
+                "assignedCaregiver": u.assigned_caregiver or "Caregiver Clinician",
+                "joined": u.date_joined.strftime("%b %d, %Y") if u.date_joined else "Recent",
+                "last_login": u.last_login.strftime("%b %d, %Y %H:%M") if u.last_login else "Active",
+            })
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        email = request.data.get("email", "").strip().lower()
+        name = request.data.get("name", "").strip() or email.split("@")[0]
+        role = request.data.get("role", "patient").upper()
+        assigned = request.data.get("assignedCaregiver", "Caregiver Clinician")
+        password = request.data.get("password", "PillSync@2026")
+
+        if not email:
+            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
+            user.full_name = name
+            user.role = role
+            user.assigned_caregiver = assigned
+            user.save()
+        else:
+            user = User.objects.create_user(
+                email=email,
+                full_name=name,
+                password=password,
+                role=role,
+                assigned_caregiver=assigned,
+            )
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "name": user.full_name,
+            "role": user.role.lower(),
+            "status": "Active" if user.is_active else "Suspended",
+            "assignedCaregiver": user.assigned_caregiver,
+            "joined": user.date_joined.strftime("%b %d, %Y") if user.date_joined else "Recent",
+        }, status=status.HTTP_201_CREATED)
+
+
+class UserDetailUpdateView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, pk):
+        user = User.objects.filter(id=pk).first()
+        if not user:
+            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if "role" in request.data:
+            user.role = request.data["role"].upper()
+        if "status" in request.data:
+            user.is_active = (request.data["status"].lower() == "active")
+        if "assignedCaregiver" in request.data:
+            user.assigned_caregiver = request.data["assignedCaregiver"]
+        if "name" in request.data:
+            user.full_name = request.data["name"]
+
+        user.save()
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "name": user.full_name,
+            "role": user.role.lower(),
+            "status": "Active" if user.is_active else "Suspended",
+            "assignedCaregiver": user.assigned_caregiver,
+        }, status=status.HTTP_200_OK)

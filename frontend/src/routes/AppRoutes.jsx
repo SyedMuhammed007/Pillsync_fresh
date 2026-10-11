@@ -1,5 +1,29 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute, RoleBasedRoute, PublicRoute } from './ProtectedRoute';
+import { useAuth } from '../context/useAuth';
+
+function DashboardRedirect() {
+  const { user } = useAuth();
+  const role = user?.role || 'patient';
+  if (role === 'caregiver') return <Navigate to="/caregiver/portal" replace />;
+  if (role === 'admin') return <Navigate to="/admin/portal" replace />;
+  return <Navigate to="/patient/portal" replace />;
+}
+
+function RootRoute() {
+  const { user, isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <div className="h-10 w-10 rounded-full border-4 border-slate-200 border-t-teal-600 animate-spin" />
+      </div>
+    );
+  }
+  if (user && isAuthenticated) {
+    return <DashboardRedirect />;
+  }
+  return <Navigate to="/login" replace />;
+}
 
 // Auth & Landing pages
 import { LandingPage } from '../features/landing/pages/LandingPage';
@@ -66,7 +90,7 @@ export function AppRoutes() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <DashboardRedirect />
             </ProtectedRoute>
           }
         />
@@ -133,7 +157,65 @@ export function AppRoutes() {
           }
         />
 
-        {/* Caregiver & Admin Role-Protected Routes */}
+        {/* Dedicated Role-Isolated Portal Routes */}
+        <Route
+          path="/patient/portal"
+          element={
+            <RoleBasedRoute allowedRoles={['patient']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/caregiver/portal"
+          element={
+            <RoleBasedRoute allowedRoles={['caregiver']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/admin/portal"
+          element={
+            <RoleBasedRoute allowedRoles={['admin']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
+
+        {/* Caregiver & Admin Role-Protected Routes (Strictly Blocked for Patients) */}
+        <Route
+          path="/caregiver"
+          element={
+            <RoleBasedRoute allowedRoles={['admin', 'caregiver']}>
+              <PatientsPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/caregiver/dashboard"
+          element={
+            <RoleBasedRoute allowedRoles={['admin', 'caregiver']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/caretaker"
+          element={
+            <RoleBasedRoute allowedRoles={['admin', 'caregiver']}>
+              <PatientsPage />
+            </RoleBasedRoute>
+          }
+        />
+        <Route
+          path="/caretaker/dashboard"
+          element={
+            <RoleBasedRoute allowedRoles={['admin', 'caregiver']}>
+              <DashboardPage />
+            </RoleBasedRoute>
+          }
+        />
         <Route
           path="/patients"
           element={
@@ -207,8 +289,10 @@ export function AppRoutes() {
           }
         />
 
-        {/* Welcome Landing Page */}
+        {/* Welcome Landing First Page */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/welcome" element={<LandingPage />} />
 
         {/* Catch all - redirect to root landing */}
         <Route path="*" element={<Navigate to="/" replace />} />

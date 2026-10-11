@@ -1,100 +1,48 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../context/useAuth';
 import { reminderApi } from '../../../api/reminders';
+import { setScopedStorage, getScopedStorage } from '../../../utils/userStorage';
 import { Layout } from '../../../components/layout';
 import { Badge } from '../../../components/common/Badge';
 import { EmptyState, CardSkeleton, Alert } from '../../../components/common';
 import { Clock, CheckCircle, Calendar, Users, Phone, Bell, ShieldCheck } from 'lucide-react';
+import { playDoseAlertChime, dispatchNativeDoseAlert } from '../../../utils/audioChime';
 import './RemindersPage.css';
 
-const COHORT_DOSE_LOGS = [
-  {
-    id: 'cl1',
-    patient: 'Ibrahim Kadri',
-    patientAge: 54,
-    patientAvatar:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    medicationName: 'Metformin',
-    dosage: '500mg',
-    time: '08:00 AM',
-    schedule: 'Morning Dose',
-    status: 'taken',
-    loggedAt: '08:05 AM',
-    note: 'Taken with breakfast',
-  },
-  {
-    id: 'cl2',
-    patient: 'Ibrahim Kadri',
-    patientAge: 54,
-    patientAvatar:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    medicationName: 'Lisinopril',
-    dosage: '10mg',
-    time: '08:00 AM',
-    schedule: 'Morning Dose',
-    status: 'taken',
-    loggedAt: '08:05 AM',
-    note: 'With full glass of water',
-  },
-  {
-    id: 'cl3',
-    patient: 'Sarah Connor',
-    patientAge: 48,
-    patientAvatar:
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    medicationName: 'Lisinopril',
-    dosage: '20mg',
-    time: '08:00 AM',
-    schedule: 'Morning Dose',
-    status: 'missed',
-    loggedAt: 'Overdue by 3h',
-    note: 'Patient reported dizziness yesterday',
-  },
-  {
-    id: 'cl4',
-    patient: 'Michael Chang',
-    patientAge: 62,
-    patientAvatar:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    medicationName: 'Levothyroxine',
-    dosage: '50mcg',
-    time: '07:00 AM',
-    schedule: 'Morning Dose',
-    status: 'taken',
-    loggedAt: '07:15 AM',
-    note: 'On empty stomach before breakfast',
-  },
-  {
-    id: 'cl5',
-    patient: 'Ibrahim Kadri',
-    patientAge: 54,
-    patientAvatar:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    medicationName: 'Vitamin D3',
-    dosage: '2000 IU',
-    time: '01:00 PM',
-    schedule: 'Afternoon Dose',
-    status: 'upcoming',
-    loggedAt: 'Pending',
-    note: 'Take with lunch',
-  },
-  {
-    id: 'cl6',
-    patient: 'Sarah Connor',
-    patientAge: 48,
-    patientAvatar:
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    medicationName: 'Atorvastatin',
-    dosage: '20mg',
-    time: '08:30 PM',
-    schedule: 'Evening Dose',
-    status: 'upcoming',
-    loggedAt: 'Pending',
-    note: 'Take before sleep',
-  },
-];
+function getCohortPatients() {
+  try {
+    const raw = localStorage.getItem('pillsync_assigned_patients');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return ['All Patients', ...parsed.map((p) => p.name)];
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
 
-const COHORT_PATIENTS = ['All Patients', 'Ibrahim Kadri', 'Sarah Connor', 'Michael Chang'];
+  try {
+    const rawUsers = localStorage.getItem('pillsync_registered_users');
+    if (rawUsers) {
+      const users = JSON.parse(rawUsers);
+      if (Array.isArray(users)) {
+        const patients = users.filter(
+          (u) =>
+            (u.role || 'patient').toLowerCase() === 'patient' &&
+            u.assignedCaregiver !== 'Unassigned'
+        );
+        if (patients.length > 0) {
+          return ['All Patients', ...patients.map((p) => p.name)];
+        }
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  return ['All Patients'];
+}
 
 export function RemindersPage() {
   const { user } = useAuth();
@@ -107,6 +55,7 @@ export function RemindersPage() {
 
   const userRole = user?.role || 'patient';
   const isCaregiver = userRole === 'caregiver' || userRole === 'admin';
+  const [cohortPatients] = useState(getCohortPatients);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,7 +65,7 @@ export function RemindersPage() {
         const data = await reminderApi.getReminders();
 
         if (!cancelled) {
-          setReminders(data);
+          setReminders(data || []);
         }
       } catch (err) {
         if (!cancelled) {
@@ -135,39 +84,56 @@ export function RemindersPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id, user?.email]);
 
   const handleMarkTaken = async (id) => {
     try {
+      setError('');
       setActioningId(id);
-      await reminderApi.markTaken(id);
 
-      setReminders((current) =>
-        current.map((reminder) =>
-          reminder.id === id ? { ...reminder, status: 'taken' } : reminder
-        )
-      );
+      // Immediately update component state and persist to persistent storage
+      setReminders((current) => {
+        const updated = current.map((reminder) =>
+          String(reminder.id) === String(id) || reminder.id === id
+            ? {
+                ...reminder,
+                status: 'taken',
+                loggedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              }
+            : reminder
+        );
+        setScopedStorage('pillsync_reminders', updated);
+        try {
+          localStorage.setItem('pillsync_reminders', JSON.stringify(updated));
+        } catch {}
+
+        // Sync with dashboard doses
+        const targetReminder = current.find((r) => String(r.id) === String(id) || r.id === id);
+        if (targetReminder) {
+          const storedDoses = getScopedStorage('pillsync_patient_doses', []) || [];
+          const syncedDoses = storedDoses.map((d) =>
+            (d.med && targetReminder.medicationName && d.med.includes(targetReminder.medicationName) && d.time === targetReminder.time) ||
+            (d.time === targetReminder.time && d.medId === targetReminder.medicationId)
+              ? { ...d, status: 'taken', takenAt: new Date().toISOString() }
+              : d
+          );
+          setScopedStorage('pillsync_patient_doses', syncedDoses);
+          try {
+            localStorage.setItem('pillsync_patient_doses', JSON.stringify(syncedDoses));
+          } catch {}
+        }
+        return updated;
+      });
+
+      // Call API client
+      playDoseAlertChime();
+      if (typeof reminderApi.markAsTaken === 'function') {
+        await reminderApi.markAsTaken(id);
+      } else if (typeof reminderApi.markTaken === 'function') {
+        await reminderApi.markTaken(id);
+      }
     } catch (err) {
-      setError('Failed to mark as taken');
-      console.error(err);
-    } finally {
-      setActioningId(null);
-    }
-  };
-
-  const handleMarkMissed = async (id) => {
-    try {
-      setActioningId(id);
-      await reminderApi.markMissed(id);
-
-      setReminders((current) =>
-        current.map((reminder) =>
-          reminder.id === id ? { ...reminder, status: 'missed' } : reminder
-        )
-      );
-    } catch (err) {
-      setError('Failed to mark as missed');
-      console.error(err);
+      console.error('Error updating dose status:', err);
     } finally {
       setActioningId(null);
     }
@@ -175,24 +141,79 @@ export function RemindersPage() {
 
   const handleSnooze = async (id) => {
     try {
+      setError('');
       setActioningId(id);
-      await reminderApi.snoozeReminder(id, 30);
 
-      setReminders((current) =>
-        current.map((reminder) =>
-          reminder.id === id ? { ...reminder, status: 'snoozed' } : reminder
-        )
+      dispatchNativeDoseAlert(
+        'Dose Snoozed (15m)',
+        'Reminder snoozed for 15 minutes. PillSync will chime again soon.'
       );
+
+      setReminders((current) => {
+        const updated = current.map((reminder) =>
+          String(reminder.id) === String(id) || reminder.id === id
+            ? { ...reminder, status: 'snoozed' }
+            : reminder
+        );
+        setScopedStorage('pillsync_reminders', updated);
+        try {
+          localStorage.setItem('pillsync_reminders', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+
+      if (typeof reminderApi.snoozeReminder === 'function') {
+        await reminderApi.snoozeReminder(id, 30);
+      }
     } catch (err) {
-      setError('Failed to snooze reminder');
-      console.error(err);
+      console.error('Error snoozing reminder:', err);
     } finally {
       setActioningId(null);
     }
   };
 
-  // Filter for caregiver vs patient
-  const sourceList = isCaregiver ? COHORT_DOSE_LOGS : reminders;
+  const handleMarkNotTaken = async (id) => {
+    try {
+      setError('');
+      setActioningId(id);
+      setReminders((current) => {
+        const updated = current.map((reminder) =>
+          String(reminder.id) === String(id) || reminder.id === id
+            ? {
+                ...reminder,
+                status: 'missed',
+                loggedAt: null,
+              }
+            : reminder
+        );
+        setScopedStorage('pillsync_reminders', updated);
+        try {
+          localStorage.setItem('pillsync_reminders', JSON.stringify(updated));
+        } catch {}
+
+        // Sync with dashboard doses
+        const targetReminder = current.find((r) => String(r.id) === String(id) || r.id === id);
+        if (targetReminder) {
+          const storedDoses = getScopedStorage('pillsync_patient_doses', []) || [];
+          const syncedDoses = storedDoses.map((d) =>
+            (d.med && targetReminder.medicationName && d.med.includes(targetReminder.medicationName) && d.time === targetReminder.time) ||
+            (d.time === targetReminder.time && d.medId === targetReminder.medicationId)
+              ? { ...d, status: 'missed', takenAt: null }
+              : d
+          );
+          setScopedStorage('pillsync_patient_doses', syncedDoses);
+          try {
+            localStorage.setItem('pillsync_patient_doses', JSON.stringify(syncedDoses));
+          } catch {}
+        }
+        return updated;
+      });
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const sourceList = reminders;
 
   const patientFiltered = sourceList.filter(
     (r) => !isCaregiver || selectedPatient === 'All Patients' || r.patient === selectedPatient
@@ -211,7 +232,7 @@ export function RemindersPage() {
   const totalReminders = patientFiltered.length;
   const takenCount = groupedReminders.taken.length;
   const missedCount = groupedReminders.missed.length;
-  const completionRate = totalReminders > 0 ? Math.round((takenCount / totalReminders) * 100) : 0;
+  const completionRate = totalReminders > 0 ? Math.round((takenCount / totalReminders) * 100) : 100;
 
   return (
     <Layout>
@@ -232,7 +253,7 @@ export function RemindersPage() {
               </Badge>
               {isCaregiver && (
                 <Badge variant={missedCount > 0 ? 'danger' : 'success'} size="sm">
-                  {missedCount > 0 ? `${missedCount} Missed Dose Alert` : '100% Adherence On Track'}
+                  {missedCount > 0 ? `${missedCount} Missed Dose Alert` : '100% Adherence Baseline'}
                 </Badge>
               )}
             </div>
@@ -290,14 +311,14 @@ export function RemindersPage() {
         </div>
 
         {/* Caregiver Patient Selector Chips */}
-        {isCaregiver && (
+        {isCaregiver && cohortPatients.length > 1 && (
           <div className="reminders-cohort-bar">
             <span className="reminders-cohort-label">
               <Users className="h-4 w-4 text-indigo-600" />
               Patient Filter:
             </span>
             <div className="reminders-cohort-chips">
-              {COHORT_PATIENTS.map((p) => (
+              {cohortPatients.map((p) => (
                 <button
                   key={p}
                   type="button"
@@ -338,7 +359,7 @@ export function RemindersPage() {
         </div>
 
         {/* Reminders List */}
-        {loading && !isCaregiver ? (
+        {loading ? (
           <CardSkeleton count={3} />
         ) : displayedReminders.length === 0 ? (
           <EmptyState
@@ -349,22 +370,38 @@ export function RemindersPage() {
         ) : (
           <div className="reminders-list">
             {displayedReminders.map((reminder) => (
-              <div key={reminder.id} className="reminder-card">
-                <div className="flex items-start gap-3.5">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+              <div
+                key={reminder.id}
+                className={`reminder-card ${
+                  reminder.status === 'taken'
+                    ? 'reminder-taken'
+                    : reminder.status === 'missed'
+                      ? 'reminder-missed'
+                      : 'reminder-pending'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`reminder-icon-box ${
+                      reminder.status === 'taken'
+                        ? 'icon-taken'
+                        : reminder.status === 'missed'
+                          ? 'icon-missed'
+                          : 'icon-pending'
+                    }`}
+                  >
                     <Clock className="h-5 w-5" />
                   </div>
+
                   <div>
-                    {/* Patient info for caregiver */}
                     {isCaregiver && reminder.patient && (
                       <div className="flex items-center gap-2 mb-1">
-                        <img
-                          src={reminder.patientAvatar}
-                          alt={reminder.patient}
-                          className="h-5 w-5 rounded-full object-cover border border-slate-200"
-                        />
-                        <span className="text-xs font-bold text-slate-900">{reminder.patient}</span>
-                        <span className="text-[10px] text-slate-400">({reminder.patientAge}y)</span>
+                        <span className="text-xs font-bold text-slate-800">
+                          {reminder.patient}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          ({reminder.patientAge || 'Patient'}y)
+                        </span>
                       </div>
                     )}
 
@@ -432,40 +469,60 @@ export function RemindersPage() {
                       </span>
                     )
                   ) : (
-                    <>
-                      {reminder.status !== 'taken' && (
-                        <button
-                          type="button"
-                          onClick={() => handleMarkTaken(reminder.id)}
-                          disabled={actioningId === reminder.id}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition cursor-pointer shadow-2xs"
-                        >
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          Mark Taken
-                        </button>
-                      )}
-
-                      {reminder.status === 'upcoming' && (
+                    <div className="flex items-center gap-1.5">
+                      {reminder.status === 'taken' ? (
+                        <>
+                          <span className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-2xs">
+                            <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                            Taken ✓
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleMarkNotTaken(reminder.id)}
+                            disabled={actioningId === reminder.id}
+                            className="rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:border-rose-200 transition cursor-pointer"
+                            title="Change to Not Taken"
+                          >
+                            Mark Not Taken
+                          </button>
+                        </>
+                      ) : (
                         <>
                           <button
                             type="button"
-                            onClick={() => handleSnooze(reminder.id)}
+                            onClick={() => handleMarkTaken(reminder.id)}
                             disabled={actioningId === reminder.id}
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                            className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 transition cursor-pointer"
                           >
-                            Snooze 30m
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Mark Taken
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleMarkMissed(reminder.id)}
+                            onClick={() => handleMarkNotTaken(reminder.id)}
                             disabled={actioningId === reminder.id}
-                            className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
+                            className={`rounded-xl px-2.5 py-1.5 text-xs font-bold transition cursor-pointer ${
+                              reminder.status === 'missed'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                            }`}
+                            title="Keep / Mark as Not Taken"
                           >
-                            Missed
+                            Not Taken
                           </button>
+                          {reminder.status === 'upcoming' && (
+                            <button
+                              type="button"
+                              onClick={() => handleSnooze(reminder.id)}
+                              disabled={actioningId === reminder.id}
+                              className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                            >
+                              Snooze (+30m)
+                            </button>
+                          )}
                         </>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               </div>

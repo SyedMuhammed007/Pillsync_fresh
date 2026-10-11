@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../../context/useAuth';
 import { adherenceApi, mockAdherenceData } from '../../../api/adherence';
 import { Layout } from '../../../components/layout';
 import { CardSkeleton, Alert } from '../../../components/common';
@@ -35,6 +36,7 @@ import {
 import './AdherencePage.css';
 
 export function AdherencePage() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState(mockAdherenceData.summary);
   const [weeklyData, setWeeklyData] = useState(mockAdherenceData.weeklyAdherence);
   const [healthData, setHealthData] = useState(mockAdherenceData.healthImprovement);
@@ -72,7 +74,7 @@ export function AdherencePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.id, user?.email]);
 
   if (loading) {
     return (
@@ -82,10 +84,44 @@ export function AdherencePage() {
     );
   }
 
-  const doseRatioData = [
-    { name: 'Taken on Time', value: summary?.takenDoses || 37, color: '#10b981' },
-    { name: 'Missed / Delayed', value: summary?.missedDoses || 2, color: '#f43f5e' },
-  ];
+  const doseRatioData =
+    summary?.totalDoses > 0
+      ? [
+          { name: 'Taken on Time', value: summary.takenDoses, color: '#10b981' },
+          { name: 'Missed / Delayed', value: summary.missedDoses, color: '#f43f5e' },
+        ]
+      : [{ name: 'No Doses Logged', value: 1, color: '#cbd5e1' }];
+
+  const handleExportClinicalReport = () => {
+    const rows = [
+      ['Report Type', 'PillSync Patient Adherence & Clinical Vitals Report'],
+      ['Timestamp', new Date().toISOString()],
+      ['Overall Adherence Rate', `${summary?.overallAdherence || 100}%`],
+      ['Doses Completed', `${summary?.takenDoses || 0} / ${summary?.totalDoses || 0}`],
+      ['Current Adherence Streak', `${summary?.streak || 0} Days`],
+      ['Clinical Vitality Score', `${summary?.healthScore || 100}%`],
+      ['Average Systolic BP', `${summary?.avgSystolic || 120} mmHg`],
+      ['Average Fasting Blood Sugar', `${summary?.avgBloodSugar || 100} mg/dL`],
+      ['Active Regimens Monitored', medicationHistory.length],
+    ];
+
+    medicationHistory.forEach((med, i) => {
+      rows.push([
+        `Medication ${i + 1}`,
+        `${med.medicationName} (${med.category}) - ${med.adherence}% adherence`,
+      ]);
+    });
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' + rows.map((e) => `"${e[0]}","${e[1]}"`).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `pillsync_adherence_report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Layout>
@@ -94,10 +130,10 @@ export function AdherencePage() {
         <div className="adherence-header">
           <div>
             <div className="adherence-title-row">
-              <h1 className="adherence-title">Adherence & Health Analytics</h1>
+              <h1 className="adherence-title">Adherence &amp; Health Analytics</h1>
               <Badge variant="success" size="sm">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                94% Target Exceeded
+                {summary.overallAdherence}% Target Met
               </Badge>
               <Badge variant="primary" size="sm">
                 Verified Clinical Protocol
@@ -112,9 +148,7 @@ export function AdherencePage() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                alert('Adherence and health vitals summary PDF exported successfully.')
-              }
+              onClick={handleExportClinicalReport}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
             >
               <Download className="h-3.5 w-3.5 text-slate-500" />
@@ -139,7 +173,7 @@ export function AdherencePage() {
             </div>
             <div className="adherence-kpi-meta text-emerald-600">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>+7.2% above clinical baseline</span>
+              <span>{summary.totalDoses > 0 ? '+7.2% above baseline' : 'Optimal baseline'}</span>
             </div>
           </div>
 
@@ -160,7 +194,7 @@ export function AdherencePage() {
             </div>
             <div className="adherence-kpi-meta text-slate-500">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400" />
-              <span>94.8% on-schedule accuracy</span>
+              <span>{summary.totalDoses > 0 ? 'Logged on schedule' : 'No scheduled doses'}</span>
             </div>
           </div>
 
@@ -176,7 +210,7 @@ export function AdherencePage() {
             </div>
             <div className="adherence-kpi-meta text-amber-600">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-              <span>Consecutive on-time intake</span>
+              <span>{summary.streak > 0 ? 'Consecutive on-time intake' : 'Start your streak today'}</span>
             </div>
           </div>
 
@@ -234,11 +268,20 @@ export function AdherencePage() {
           </div>
 
           <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                data={healthData}
-                margin={{ top: 15, right: 20, left: -15, bottom: 0 }}
-              >
+            {healthData.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <HeartPulse className="h-8 w-8 text-slate-300 mb-2" />
+                <p className="text-sm font-bold text-slate-700">No Biomarker Logs Recorded Yet</p>
+                <p className="text-xs text-slate-400 max-w-sm mt-1">
+                  Once daily doses and vital signs are logged, correlation trends between medication adherence and health metrics will graph automatically.
+                </p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={healthData}
+                  margin={{ top: 15, right: 20, left: -15, bottom: 0 }}
+                >
                 <defs>
                   <linearGradient id="adherenceGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
@@ -332,6 +375,7 @@ export function AdherencePage() {
                 )}
               </ComposedChart>
             </ResponsiveContainer>
+            )}
           </div>
 
           {/* 3 Vital Stats Summary Cards */}
@@ -341,8 +385,10 @@ export function AdherencePage() {
                 <Activity className="h-5 w-5" />
               </div>
               <div>
-                <p className="vital-stat-title">Blood Pressure Stabilized</p>
-                <p className="vital-stat-value">122/78 mmHg (Reduced by 16 mmHg)</p>
+                <p className="vital-stat-title">Blood Pressure Target</p>
+                <p className="vital-stat-value">
+                  {summary.totalDoses > 0 ? '120/80 mmHg (Target Range)' : 'Awaiting First Reading'}
+                </p>
               </div>
             </div>
 
@@ -351,8 +397,10 @@ export function AdherencePage() {
                 <Droplets className="h-5 w-5" />
               </div>
               <div>
-                <p className="vital-stat-title">Fasting Glucose In Range</p>
-                <p className="vital-stat-value">114 mg/dL (Reduced by 28 mg/dL)</p>
+                <p className="vital-stat-title">Fasting Glucose Target</p>
+                <p className="vital-stat-value">
+                  {summary.totalDoses > 0 ? '< 120 mg/dL (Target Range)' : 'Awaiting First Reading'}
+                </p>
               </div>
             </div>
 
@@ -363,7 +411,7 @@ export function AdherencePage() {
               <div>
                 <p className="vital-stat-title">Care Plan Target</p>
                 <p className="vital-stat-value text-emerald-700 font-semibold">
-                  100% Weekend On-Time Intake
+                  {summary.totalDoses > 0 ? '> 90% Protocol Target' : 'Zero Active Regimens'}
                 </p>
               </div>
             </div>
@@ -379,7 +427,7 @@ export function AdherencePage() {
                 <p className="adherence-panel-desc">Daily doses completed vs scheduled</p>
               </div>
               <Badge variant="primary" size="xs">
-                <Award className="h-3.5 w-3.5" /> 90% Target Met
+                <Award className="h-3.5 w-3.5" /> {summary.overallAdherence}% Target Met
               </Badge>
             </div>
 
@@ -460,27 +508,28 @@ export function AdherencePage() {
 
         {/* 4. Caregiver Clinical Progress Review Box */}
         <div className="adherence-clinical-note-box">
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
-            alt="Caregiver"
-            className="adherence-clinical-avatar"
-          />
+          <div className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+            MD
+          </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xs font-bold text-slate-900">Dr. Oliver Mitchell</h3>
+              <h3 className="text-xs font-bold text-slate-900">Clinical Care Team</h3>
               <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                Lead Caregiver & Physician Review
+                Attending Physician & Care Review
               </span>
             </div>
-            <p className="text-xs text-slate-700 leading-relaxed mb-2">
-              "Outstanding adherence consistency over the past 14 days! Maintaining &gt;90%
-              on-schedule intake with Metformin and Lisinopril has directly stabilized systolic
-              blood pressure to 122 mmHg and lowered fasting blood glucose to 114 mg/dL. Continue
-              current morning and evening regimens."
-            </p>
+            {medicationHistory.length > 0 ? (
+              <p className="text-xs text-slate-700 leading-relaxed mb-2">
+                "Active intake monitored for your prescribed regimens ({medicationHistory.map((m) => m.medicationName).join(', ')}). Continue following your scheduled morning and evening dose timings."
+              </p>
+            ) : (
+              <p className="text-xs text-slate-700 leading-relaxed mb-2">
+                "No prescriptions active yet. Once you add your medications, clinical adherence insights and physician feedback will be automatically generated here."
+              </p>
+            )}
             <div className="flex items-center gap-4 text-[11px] text-slate-500">
-              <span>📅 Reviewed: Today, 08:30 AM</span>
-              <span>🛡️ Next Milestone Check: Sunday, Sep 6</span>
+              <span>📅 Reviewed: Today</span>
+              <span>🛡️ Telemetry: Active</span>
             </div>
           </div>
         </div>
@@ -507,7 +556,14 @@ export function AdherencePage() {
                 </tr>
               </thead>
               <tbody>
-                {medicationHistory.map((med) => (
+                {medicationHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-8 text-slate-400 text-xs font-medium">
+                      No prescriptions logged yet. Add your medications to track regimen adherence.
+                    </td>
+                  </tr>
+                ) : (
+                medicationHistory.map((med) => (
                   <tr key={med.id}>
                     <td>
                       <div>
@@ -551,7 +607,7 @@ export function AdherencePage() {
                       </span>
                     </td>
                   </tr>
-                ))}
+                )))}
               </tbody>
             </table>
           </div>
