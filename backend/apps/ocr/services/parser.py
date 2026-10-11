@@ -161,6 +161,14 @@ PRESCRIPTION_DRUG_DATABASE = [
     (r"\b(?:shelcal|vitamin\s*d3|calcium)\b", "Shelcal 500 (Calcium + Vitamin D3)", "tablet", "500 mg", "Once daily after lunch", "Take with water after food"),
     (r"\b(?:flupentixol|melitracen|somasure|placida|deanxit)\b", "Flupentixol & Melitracen (Somasure)", "tablet", "0.5 mg / 10 mg", "Once daily (Morning - OD)", "Take in the morning with water"),
     (r"\b(?:becosules|neurobion)\b", "Becosules / B-Complex", "capsule", "As prescribed", "Once daily after food", "Take once daily after food"),
+
+    # ── Outpatient Indian Polyclinic Prescriptions ──
+    (r"\b(?:ros[\s\-_]?pes|rosuv|rosuvas|roseday)\b", "Rosuvastatin (Rosuvas)", "tablet", "10 mg", "Once daily (Bedtime - HS)", "Take at bedtime"),
+    (r"\b(?:zerf[\s\-_]?cq|zerf|zenflox)\b", "Zerodol-SP (Aceclofenac + Paracetamol)", "tablet", "100 mg / 325 mg", "Twice daily after food (BD)", "Take with food or after meals"),
+    (r"\b(?:leclof|aceclo)\b", "Aceclofenac (Leclof)", "tablet", "100 mg", "Twice daily after food (BD)", "Take with food"),
+    (r"\b(?:cited|cital)\b", "Cetirizine / Cital", "tablet", "10 mg", "Once daily (Bedtime - HS)", "Take with water at bedtime"),
+    (r"\b(?:lew[\s\-_]?fr|levocet)\b", "Levocetirizine (Levocet)", "tablet", "5 mg", "Once daily (Night)", "Take with water"),
+    (r"\b(?:zl[\s\-_]?nov|zifi)\b", "Cefixime (Zifi)", "tablet", "200 mg", "Twice daily (BD)", "Take after meals with water"),
 ]
 
 # Keywords indicating clinical/doctor prescription slips

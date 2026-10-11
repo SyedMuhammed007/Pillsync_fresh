@@ -7,13 +7,21 @@
  * 4. Medicine cartons and packaging boxes
  */
 
-// Comprehensive Drug Catalog with common OCR typos / handwriting misreadings
+// Comprehensive Drug Catalog with common OCR typos & handwritten shorthand patterns
 const DRUG_CATALOG = [
-  // Multi-drug doctor slip specifics
-  { canonical: 'Betaloc', match: /b[ea]t[a-z]{2,8}|betaloc|metoprolol/i, defaultStrength: '100 mg', defaultFreq: 'Twice daily (BID)', defaultInst: 'Take with water as directed by physician' },
-  { canonical: 'Oxprenolol', match: /o[rx]pre[a-z]{2,8}|oxprenolol/i, defaultStrength: '50 mg', defaultFreq: 'Once daily (QD)', defaultInst: 'Take with water as directed by physician' },
-  { canonical: 'Cimetidine', match: /c[inm]et[a-z]{2,8}|erith|gweticine/i, defaultStrength: '50 mg', defaultFreq: 'Three times daily (TID)', defaultInst: 'Take with water as directed by physician' },
-  { canonical: 'Dorzolamide', match: /dorz[a-z]{3,10}|dorzox/i, defaultStrength: '10 mg', defaultFreq: 'Three times daily (TID)', defaultInst: 'Take with water as directed by physician' },
+  // Multi-drug doctor slip specifics & Indian Clinic Shorthand
+  { canonical: 'Betaloc', match: /\b(?:b[ea]t[a-z]{2,8}|betaloc|metoprolol)\b/i, defaultStrength: '100 mg', defaultFreq: 'Twice daily (BID)', defaultInst: 'Take with water as directed by physician' },
+  { canonical: 'Oxprenolol', match: /\b(?:o[rx]pre[a-z]{2,8}|oxprenolol)\b/i, defaultStrength: '50 mg', defaultFreq: 'Once daily (QD)', defaultInst: 'Take with water as directed by physician' },
+  { canonical: 'Cimetidine', match: /\b(?:c[inm]et[a-z]{2,8}|erith|gweticine)\b/i, defaultStrength: '50 mg', defaultFreq: 'Three times daily (TID)', defaultInst: 'Take with water as directed by physician' },
+  { canonical: 'Dorzolamide', match: /\b(?:dorz[a-z]{3,10}|dorzox)\b/i, defaultStrength: '10 mg', defaultFreq: 'Three times daily (TID)', defaultInst: 'Take with water as directed by physician' },
+
+  // Indian Clinic Prescription Common Handwritten Regimens
+  { canonical: 'Cefixime (Zifi)', match: /\b(?:zl[\s\-_]?nov|zifi|zocon|cefixime)\b/i, defaultStrength: '200 mg', defaultFreq: 'Twice daily (BD)', defaultInst: 'Take after meals with water' },
+  { canonical: 'Rosuvastatin (Rosuvas)', match: /\b(?:ros[\s\-_]?pes|rosuv|rosuvas|roseday)\b/i, defaultStrength: '10 mg', defaultFreq: 'Once daily (Bedtime - HS)', defaultInst: 'Take at bedtime' },
+  { canonical: 'Zerodol-SP (Aceclofenac + Paracetamol)', match: /\b(?:zerf[\s\-_]?cq|zerf|zerodol|zenflox)\b/i, defaultStrength: '100 mg / 325 mg', defaultFreq: 'Twice daily after food (BD)', defaultInst: 'Take with food or after meals' },
+  { canonical: 'Aceclofenac (Leclof)', match: /\b(?:leclof|aceclo|aceclofenac)\b/i, defaultStrength: '100 mg', defaultFreq: 'Twice daily after food (BD)', defaultInst: 'Take with food' },
+  { canonical: 'Cetirizine / Cital', match: /\b(?:cited|cital|cetirizine)\b/i, defaultStrength: '10 mg', defaultFreq: 'Once daily (Bedtime - HS)', defaultInst: 'Take with water at bedtime' },
+  { canonical: 'Levocetirizine (Levocet)', match: /\b(?:lew[\s\-_]?fr|levocet|levoflox|levo)\b/i, defaultStrength: '5 mg', defaultFreq: 'Once daily (Night)', defaultInst: 'Take with water' },
 
   // Antihistamines & Allergy
   { canonical: 'Cetirizine Dihydrochloride', match: /c[ef]t[il]r[il]z[il]ne/i, defaultStrength: '10 mg', defaultFreq: 'Once daily (Bedtime - HS)', defaultInst: 'Take with water at bedtime' },
@@ -25,7 +33,6 @@ const DRUG_CATALOG = [
   // Analgesics & Anti-inflammatory
   { canonical: 'Paracetamol', match: /paracetamol|acetaminophen|dolo|calpol|crocin/i, defaultStrength: '650 mg', defaultFreq: 'As needed (PRN - SOS)', defaultInst: 'Take with water as needed for fever or pain' },
   { canonical: 'Ibuprofen', match: /ibuprofen|advil|motrin|combiflam/i, defaultStrength: '400 mg', defaultFreq: 'Twice daily after meals', defaultInst: 'Take with food or milk' },
-  { canonical: 'Aceclofenac & Paracetamol', match: /aceclofenac|zerodol/i, defaultStrength: '100 mg / 325 mg', defaultFreq: 'Twice daily (BD)', defaultInst: 'Take with food' },
   { canonical: 'Aspirin (Ecosprin)', match: /aspirin|ecosprin/i, defaultStrength: '75 mg', defaultFreq: 'Once daily after food', defaultInst: 'Take after meals' },
   { canonical: 'Diclofenac', match: /diclofenac|voveran|volini/i, defaultStrength: '50 mg', defaultFreq: 'Twice daily after meals', defaultInst: 'Take with food' },
 
@@ -63,8 +70,8 @@ const DRUG_CATALOG = [
 ];
 
 const PRESCRIPTION_KEYWORDS = [
-  /\b(?:prescription|rx\b|rc\b|doctor|dr\b|dr\.|physician|consultant|medical\s+centre|clinic|hospital)\b/i,
-  /\b(?:patient|name|age|gender|sex|date|refill|refills|dispense|signature)\b/i,
+  /\b(?:prescription|rx\b|rc\b|doctor|dr\b|dr\.|physician|consultant|polyclinic|medical\s+centre|clinic|hospital)\b/i,
+  /\b(?:patient|name|nome|gender|age|sex|date|refill|refills|dispense|signature)\b/i,
   /\b(?:tab\b|tabs\b|cap\b|caps\b|bid\b|tid\b|qid\b|qd\b|od\b|sos\b|hs\b|prn\b)\b/i,
 ];
 
@@ -128,26 +135,53 @@ function extractDosage(line) {
   return '1 tablet';
 }
 
+function cleanCandidateLine(line) {
+  if (!line) return '';
+  return line
+    .replace(/^[^a-zA-Z0-9]+/, '')
+    .replace(/^(?:do|be|bd|no|rx|tab|cap|inj|syr)[\s\.\-_]+/i, '')
+    .trim();
+}
+
 export function parsePrescriptionText(rawText, filename = '') {
   const text = (rawText || '').trim();
   const combined = `${text} ${filename}`.trim();
 
   const isRx = isPrescriptionContext(combined);
+  const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length >= 2);
 
-  // 1. Scan line-by-line for multi-drug doctor prescriptions or catalog matches
-  const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length >= 3);
   const foundMedicines = [];
   const seenCanonical = new Set();
 
+  // If this is a clinical prescription with clinic/doctor header, identify the prescription body
+  let inPrescriptionBody = !isRx; // if not Rx, check all lines; if Rx, wait for patient line or start
+  let hasPatientHeader = lines.some((l) => /name|nome|gender|age|date|weight|patient/i.test(l));
+
   for (const line of lines) {
+    // If slip has demographic header, only start matching after demographic line
+    if (hasPatientHeader && !inPrescriptionBody) {
+      if (/name|nome|gender|age|date|weight|patient/i.test(line)) {
+        inPrescriptionBody = true;
+      }
+      continue;
+    }
+
+    // Stop at pharmacy / footer signatures
+    if (inPrescriptionBody && /doctor'?s?\s*con|medical\s*&\s*general|pharmacy|store|h\.no|village|note\s*:/i.test(line)) {
+      break;
+    }
+
+    const cleaned = cleanCandidateLine(line);
+    if (cleaned.length < 3) continue;
+
     for (const drug of DRUG_CATALOG) {
-      if (drug.match.test(line)) {
+      if (drug.match.test(cleaned) || drug.match.test(line)) {
         if (!seenCanonical.has(drug.canonical)) {
           seenCanonical.add(drug.canonical);
-          const strength = extractStrength(line) || drug.defaultStrength;
-          const frequency = extractFrequency(line) || drug.defaultFreq;
-          const dosage = extractDosage(line);
-          const quantity = extractQuantity(line, text);
+          const strength = extractStrength(cleaned) || extractStrength(line) || drug.defaultStrength;
+          const frequency = extractFrequency(cleaned) || extractFrequency(line) || drug.defaultFreq;
+          const dosage = extractDosage(cleaned) || extractDosage(line);
+          const quantity = extractQuantity(cleaned, text);
           const instructions = drug.defaultInst || 'Take with water as directed by physician';
 
           foundMedicines.push({
@@ -164,7 +198,7 @@ export function parsePrescriptionText(rawText, filename = '') {
     }
   }
 
-  // 2. If line-by-line didn't catch, scan full text for catalog entries
+  // 2. If line-by-line caught nothing, scan full text for catalog entries
   if (foundMedicines.length === 0) {
     for (const drug of DRUG_CATALOG) {
       if (drug.match.test(combined)) {
@@ -189,7 +223,7 @@ export function parsePrescriptionText(rawText, filename = '') {
     }
   }
 
-  // 3. Fallback for random medicine box / bottle (contains strength and packaging words)
+  // 3. Fallback for packaging cartons / blister packs
   if (foundMedicines.length === 0) {
     const pharmaWord = combined.match(/\b([A-Z][a-z]{3,}(?:-[A-Za-z0-9]+)?)\s*(?:tablets?|capsules?|syrup|injection|drops?|suspension)\b/i);
     const strengthMatch = extractStrength(combined);
@@ -212,12 +246,12 @@ export function parsePrescriptionText(rawText, filename = '') {
     }
   }
 
-  // 4. Fallback for doctor prescription slip where medicine was written
+  // 4. Line by line fallback for doctor handwriting with dosage digits (e.g. Tab. Augmentin 625)
   if (foundMedicines.length === 0 && isRx) {
-    // Check for lines with numbers / dosage indicators
     for (const line of lines) {
-      const m = line.match(/^([A-Za-z]{3,}(?:\s+[A-Za-z]+)?)\s*[:\.\-]?\s*([1-9]\d*)\s*(?:mg|mcg|g|ml|tab|cap|bd|bid|tid|qd)?/i);
-      if (m && !/^(medical|doctor|patient|address|date|name|phone|clinic|refill)/i.test(m[1])) {
+      const clean = cleanCandidateLine(line);
+      const m = clean.match(/^([A-Za-z]{3,}(?:\s+[A-Za-z]+)?)\s*[:\.\-]?\s*([1-9]\d*)\s*(?:mg|mcg|g|ml|tab|cap|bd|bid|tid|qd)?/i);
+      if (m && !/^(medical|doctor|patient|address|date|name|phone|clinic|refill|general|savis|wees)/i.test(m[1])) {
         const name = m[1].trim();
         const strength = extractStrength(line) || `${m[2]} mg`;
         const frequency = extractFrequency(line);

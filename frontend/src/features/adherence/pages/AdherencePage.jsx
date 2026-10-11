@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/useAuth';
 import { adherenceApi, mockAdherenceData } from '../../../api/adherence';
 import { getCohortPatients } from '../../../utils/cohort';
 import { getScopedStorage } from '../../../utils/userStorage';
+import { apiClient } from '../../../api/client';
 import { Layout } from '../../../components/layout';
 import { CardSkeleton, Alert } from '../../../components/common';
 import { Badge } from '../../../components/common/Badge';
@@ -61,6 +62,15 @@ export function AdherencePage() {
         setLoading(true);
 
         if (isCaregiver) {
+          try {
+            const res = await apiClient.get('/auth/users/');
+            if (Array.isArray(res.data) && res.data.length > 0) {
+              try {
+                localStorage.setItem('pillsync_registered_users', JSON.stringify(res.data));
+              } catch {}
+            }
+          } catch {}
+
           const currentCohort = getCohortPatients(user);
           if (currentCohort.length === 0) {
             if (isMounted) {
