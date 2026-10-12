@@ -11,7 +11,9 @@ export function isPatientAssignedToCaregiver(patient, caregiverUser) {
   if (role === 'admin') return true;
   if (!patient) return false;
 
-  const assigned = String(patient.assignedCaregiver || '').trim().toLowerCase();
+  const assigned = String(patient.assignedCaregiver || '')
+    .trim()
+    .toLowerCase();
   if (!assigned || assigned === 'unassigned') return false;
 
   const cName = caregiverUser.name ? String(caregiverUser.name).trim().toLowerCase() : '';

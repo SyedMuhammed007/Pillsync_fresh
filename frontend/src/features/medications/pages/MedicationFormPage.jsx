@@ -430,7 +430,9 @@ export function MedicationFormPage() {
 
     for (const group of CLINICAL_CATALOG) {
       const match = group.meds.find(
-        (m) => m.name.toLowerCase() === medName.toLowerCase() || m.name.toLowerCase().startsWith(medName.toLowerCase())
+        (m) =>
+          m.name.toLowerCase() === medName.toLowerCase() ||
+          m.name.toLowerCase().startsWith(medName.toLowerCase())
       );
       if (match) {
         setFormData((prev) => ({
@@ -544,8 +546,8 @@ export function MedicationFormPage() {
             <div className="selection-card-box">
               <div className="flex items-center justify-between mb-2">
                 <span className="flex items-center gap-1.5 text-xs font-bold text-indigo-900">
-                  <Sparkles className="h-4 w-4 text-indigo-600" />
-                  ⚡ 1-Click Popular Prescriptions (Tap to Auto-Fill All Details)
+                  <Sparkles className="h-4 w-4 text-indigo-600" />⚡ 1-Click Popular Prescriptions
+                  (Tap to Auto-Fill All Details)
                 </span>
                 <span className="text-[10px] text-indigo-600 font-bold bg-indigo-100 px-2 py-0.5 rounded-full">
                   No Manual Typing
@@ -575,7 +577,9 @@ export function MedicationFormPage() {
                   <Pill className="h-4 w-4 text-indigo-600" />
                   Or Select from Full Clinical Catalog *
                 </span>
-                <span className="text-[10px] text-slate-500 font-medium">Over 25+ standard clinical regimens</span>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  Over 25+ standard clinical regimens
+                </span>
               </label>
 
               <select
@@ -622,7 +626,9 @@ export function MedicationFormPage() {
                   className="med-form-input cursor-pointer"
                 >
                   <option value="Type 2 Diabetes">Type 2 Diabetes</option>
-                  <option value="Hypertension (High Blood Pressure)">Hypertension (High Blood Pressure)</option>
+                  <option value="Hypertension (High Blood Pressure)">
+                    Hypertension (High Blood Pressure)
+                  </option>
                   <option value="High Cholesterol">High Cholesterol</option>
                   <option value="Cardiovascular Health">Cardiovascular Health</option>
                   <option value="Hypothyroidism">Hypothyroidism</option>
@@ -638,17 +644,19 @@ export function MedicationFormPage() {
               <div>
                 <label className="med-form-label">Dosage Strength (Tap to Select) *</label>
                 <div className="chip-select-group mb-2">
-                  {['5mg', '10mg', '20mg', '25mg', '50mg', '100mg', '500mg', '1 Tab', '1 Cap'].map((st) => (
-                    <button
-                      type="button"
-                      key={st}
-                      onClick={() => setFormData({ ...formData, dosage: st })}
-                      className={`chip-btn ${formData.dosage === st ? 'chip-btn-active' : ''}`}
-                    >
-                      {formData.dosage === st && <Check className="h-3 w-3" />}
-                      {st}
-                    </button>
-                  ))}
+                  {['5mg', '10mg', '20mg', '25mg', '50mg', '100mg', '500mg', '1 Tab', '1 Cap'].map(
+                    (st) => (
+                      <button
+                        type="button"
+                        key={st}
+                        onClick={() => setFormData({ ...formData, dosage: st })}
+                        className={`chip-btn ${formData.dosage === st ? 'chip-btn-active' : ''}`}
+                      >
+                        {formData.dosage === st && <Check className="h-3 w-3" />}
+                        {st}
+                      </button>
+                    )
+                  )}
                 </div>
                 <select
                   value={formData.dosage}
@@ -730,7 +738,9 @@ export function MedicationFormPage() {
 
               {/* Meal Instruction Selection Chips */}
               <div className="med-form-full">
-                <label className="med-form-label">Meal &amp; Food Instructions (Tap to Select)</label>
+                <label className="med-form-label">
+                  Meal &amp; Food Instructions (Tap to Select)
+                </label>
                 <div className="chip-select-group mb-2">
                   {INSTRUCTION_PRESETS.map((inst) => (
                     <button

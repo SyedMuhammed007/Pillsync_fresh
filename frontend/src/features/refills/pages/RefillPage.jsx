@@ -38,7 +38,11 @@ export function RefillPage() {
           }
           const cohortMeds = [];
           currentCohort.forEach((pt) => {
-            const ptMeds = getScopedStorageForUser(pt.email || pt.id, 'pillsync_patient_medications', []);
+            const ptMeds = getScopedStorageForUser(
+              pt.email || pt.id,
+              'pillsync_patient_medications',
+              []
+            );
             if (ptMeds && ptMeds.length > 0) {
               cohortMeds.push(...ptMeds.map((m) => ({ ...m, patientName: pt.name })));
             }
@@ -57,7 +61,7 @@ export function RefillPage() {
       }
     };
     fetchMeds();
-  }, [user?.id, user?.email, isCaregiver]);
+  }, [user, isCaregiver]);
 
   const handleOrderRefill = (item) => {
     setOrderedRefills((prev) => ({ ...prev, [item.id]: true }));
@@ -178,7 +182,10 @@ export function RefillPage() {
                     <PackageCheck className="h-3.5 w-3.5" />
                     {orderedRefills[item.id] ? 'Refill Requested' : 'Order refill'}
                   </button>
-                  <Link to="/medications" className="secondary-btn cursor-pointer inline-flex items-center justify-center text-decoration-none">
+                  <Link
+                    to="/medications"
+                    className="secondary-btn cursor-pointer inline-flex items-center justify-center text-decoration-none"
+                  >
                     View prescription
                   </Link>
                 </div>
@@ -190,9 +197,12 @@ export function RefillPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 mb-3">
               <Users className="h-6 w-6" />
             </div>
-            <h3 className="text-sm font-bold text-slate-800">No cohort prescriptions tracked for refill</h3>
+            <h3 className="text-sm font-bold text-slate-800">
+              No cohort prescriptions tracked for refill
+            </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Assign patients to your care cohort in the Patients Portal to track their medication supplies and refill forecasts.
+              Assign patients to your care cohort in the Patients Portal to track their medication
+              supplies and refill forecasts.
             </p>
             <Link
               to="/patients"
@@ -207,9 +217,12 @@ export function RefillPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3">
               <Pill className="h-6 w-6" />
             </div>
-            <h3 className="text-sm font-bold text-slate-800">No prescriptions tracked for refill</h3>
+            <h3 className="text-sm font-bold text-slate-800">
+              No prescriptions tracked for refill
+            </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Add your current medications to activate intelligent refill forecasting and supply alerts.
+              Add your current medications to activate intelligent refill forecasting and supply
+              alerts.
             </p>
             <Link
               to="/medications/new"

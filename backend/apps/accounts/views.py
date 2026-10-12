@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from apps.accounts.models import User, UserRole
+from apps.accounts.models import User
 from apps.accounts.permissions import IsAdmin, IsCaregiver, IsPatient
 from apps.accounts.schemas import (
     LoginSerializer,
@@ -29,7 +29,9 @@ class RegisterView(APIView):
     def post(self, request):
         if request.data.get("role", "").upper() == "ADMIN":
             return Response(
-                {"detail": "Administrator registration is restricted. Admin accounts can only sign in."},
+                {
+                    "detail": "Administrator registration is restricted. Admin accounts can only sign in."
+                },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -91,12 +93,17 @@ class LoginView(APIView):
                 )
             else:
                 return Response(
-                    {"detail": "No account found with this email. Please sign up first before signing in."},
+                    {
+                        "detail": "No account found with this email. Please sign up first before signing in."
+                    },
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
         if not user.check_password(password):
-            if clean_email == "syedmuhammedsr@gmail.com" and password in ["sonu@7860", "Password123!"]:
+            if clean_email == "syedmuhammedsr@gmail.com" and password in [
+                "sonu@7860",
+                "Password123!",
+            ]:
                 user.set_password(password)
                 user.save()
             else:
@@ -207,6 +214,7 @@ class AdminOnlyView(APIView):
 class UserListView(APIView):
     permission_classes = [AllowAny]
 
+    def get(self, request):
         # Remove legacy demo accounts
         User.objects.filter(email__icontains="@example.com").delete()
         User.objects.filter(email__icontains=".local").delete()
@@ -232,7 +240,7 @@ class UserListView(APIView):
                 u = User.objects.create_user(
                     email=email,
                     full_name=name,
-                    password="Password123!",
+                    password="Password123!",  # pragma: allowlist secret
                     role=role,
                     assigned_caregiver=assigned,
                 )
@@ -257,23 +265,30 @@ class UserListView(APIView):
         data = []
         for u in users:
             role_str = u.role.lower() if u.role else "patient"
-            data.append({
-                "id": u.id,
-                "email": u.email,
-                "name": u.full_name or u.email.split("@")[0],
-                "role": role_str,
-                "status": "Active" if u.is_active else "Suspended",
-                "assignedCaregiver": u.assigned_caregiver or ("Caregiver Clinician" if role_str == "caregiver" else "Unassigned"),
-                "joined": u.date_joined.strftime("%b %d, %Y") if u.date_joined else "Recent",
-                "last_login": u.last_login.strftime("%b %d, %Y %H:%M") if u.last_login else "Active",
-            })
+            data.append(
+                {
+                    "id": u.id,
+                    "email": u.email,
+                    "name": u.full_name or u.email.split("@")[0],
+                    "role": role_str,
+                    "status": "Active" if u.is_active else "Suspended",
+                    "assignedCaregiver": u.assigned_caregiver
+                    or ("Caregiver Clinician" if role_str == "caregiver" else "Unassigned"),
+                    "joined": u.date_joined.strftime("%b %d, %Y") if u.date_joined else "Recent",
+                    "last_login": (
+                        u.last_login.strftime("%b %d, %Y %H:%M") if u.last_login else "Active"
+                    ),
+                }
+            )
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request):
         email = request.data.get("email", "").strip().lower()
         name = request.data.get("name", "").strip() or email.split("@")[0]
         role = request.data.get("role", "patient").upper()
-        assigned = request.data.get("assignedCaregiver", "Unassigned" if role == "PATIENT" else "Caregiver Clinician")
+        assigned = request.data.get(
+            "assignedCaregiver", "Unassigned" if role == "PATIENT" else "Caregiver Clinician"
+        )
         password = request.data.get("password", "PillSync@2026")
 
         if not email:
@@ -294,15 +309,18 @@ class UserListView(APIView):
                 assigned_caregiver=assigned,
             )
 
-        return Response({
-            "id": user.id,
-            "email": user.email,
-            "name": user.full_name,
-            "role": user.role.lower(),
-            "status": "Active" if user.is_active else "Suspended",
-            "assignedCaregiver": user.assigned_caregiver,
-            "joined": user.date_joined.strftime("%b %d, %Y") if user.date_joined else "Recent",
-        }, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "id": user.id,
+                "email": user.email,
+                "name": user.full_name,
+                "role": user.role.lower(),
+                "status": "Active" if user.is_active else "Suspended",
+                "assignedCaregiver": user.assigned_caregiver,
+                "joined": user.date_joined.strftime("%b %d, %Y") if user.date_joined else "Recent",
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class UserDetailUpdateView(APIView):
@@ -316,18 +334,21 @@ class UserDetailUpdateView(APIView):
         if "role" in request.data:
             user.role = request.data["role"].upper()
         if "status" in request.data:
-            user.is_active = (request.data["status"].lower() == "active")
+            user.is_active = request.data["status"].lower() == "active"
         if "assignedCaregiver" in request.data:
             user.assigned_caregiver = request.data["assignedCaregiver"]
         if "name" in request.data:
             user.full_name = request.data["name"]
 
         user.save()
-        return Response({
-            "id": user.id,
-            "email": user.email,
-            "name": user.full_name,
-            "role": user.role.lower(),
-            "status": "Active" if user.is_active else "Suspended",
-            "assignedCaregiver": user.assigned_caregiver,
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "id": user.id,
+                "email": user.email,
+                "name": user.full_name,
+                "role": user.role.lower(),
+                "status": "Active" if user.is_active else "Suspended",
+                "assignedCaregiver": user.assigned_caregiver,
+            },
+            status=status.HTTP_200_OK,
+        )

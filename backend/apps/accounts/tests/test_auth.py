@@ -15,7 +15,7 @@ def patient_user(db):
     return User.objects.create_user(
         email="patient@example.com",
         full_name="Jane Patient",
-        password="password123",
+        password="password123",  # pragma: allowlist secret
         role=UserRole.PATIENT,
     )
 
@@ -25,7 +25,7 @@ def caregiver_user(db):
     return User.objects.create_user(
         email="caregiver@example.com",
         full_name="John Caregiver",
-        password="password123",
+        password="password123",  # pragma: allowlist secret
         role=UserRole.CAREGIVER,
     )
 
@@ -35,7 +35,7 @@ def admin_user(db):
     return User.objects.create_user(
         email="admin@example.com",
         full_name="Admin User",
-        password="password123",
+        password="password123",  # pragma: allowlist secret
         role=UserRole.ADMIN,
     )
 

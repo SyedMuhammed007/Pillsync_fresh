@@ -45,7 +45,12 @@ export function RemindersPage() {
           // Gather reminders across all assigned cohort patients
           const cohortReminders = [];
           cohort.forEach((p) => {
-            const pKey = p.email ? p.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+            const pKey = p.email
+              ? p.email
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '_')
+              : '';
             let pMeds = [];
             try {
               const rawMeds = localStorage.getItem(`pillsync_patient_medications_${pKey}`);
@@ -62,13 +67,16 @@ export function RemindersPage() {
 
             if (Array.isArray(pMeds) && pMeds.length > 0) {
               pMeds.forEach((m) => {
-                const schedules = Array.isArray(m.schedule) && m.schedule.length > 0 ? m.schedule : ['08:00 AM'];
+                const schedules =
+                  Array.isArray(m.schedule) && m.schedule.length > 0 ? m.schedule : ['08:00 AM'];
                 schedules.forEach((timeStr) => {
                   const genId = `rem-${p.id || p.name}-${m.id || m.name}-${timeStr.replace(/[^a-zA-Z0-9]/g, '')}`;
                   const existing = pStoredReminders.find(
                     (er) =>
                       String(er.id) === String(genId) ||
-                      (er.medicationName && er.medicationName.trim().toLowerCase() === m.name.trim().toLowerCase() && er.time === timeStr)
+                      (er.medicationName &&
+                        er.medicationName.trim().toLowerCase() === m.name.trim().toLowerCase() &&
+                        er.time === timeStr)
                   );
                   cohortReminders.push({
                     id: genId,
@@ -115,7 +123,7 @@ export function RemindersPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email, userRole]);
+  }, [user, userRole]);
 
   const handleMarkTaken = async (id) => {
     try {
@@ -143,7 +151,10 @@ export function RemindersPage() {
         if (targetReminder) {
           const storedDoses = getScopedStorage('pillsync_patient_doses', []) || [];
           const syncedDoses = storedDoses.map((d) =>
-            (d.med && targetReminder.medicationName && d.med.includes(targetReminder.medicationName) && d.time === targetReminder.time) ||
+            (d.med &&
+              targetReminder.medicationName &&
+              d.med.includes(targetReminder.medicationName) &&
+              d.time === targetReminder.time) ||
             (d.time === targetReminder.time && d.medId === targetReminder.medicationId)
               ? { ...d, status: 'taken', takenAt: new Date().toISOString() }
               : d
@@ -227,7 +238,10 @@ export function RemindersPage() {
         if (targetReminder) {
           const storedDoses = getScopedStorage('pillsync_patient_doses', []) || [];
           const syncedDoses = storedDoses.map((d) =>
-            (d.med && targetReminder.medicationName && d.med.includes(targetReminder.medicationName) && d.time === targetReminder.time) ||
+            (d.med &&
+              targetReminder.medicationName &&
+              d.med.includes(targetReminder.medicationName) &&
+              d.time === targetReminder.time) ||
             (d.time === targetReminder.time && d.medId === targetReminder.medicationId)
               ? { ...d, status: 'missed', takenAt: null }
               : d
@@ -427,9 +441,7 @@ export function RemindersPage() {
                   <div>
                     {isCaregiver && reminder.patient && (
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-slate-800">
-                          {reminder.patient}
-                        </span>
+                        <span className="text-xs font-bold text-slate-800">{reminder.patient}</span>
                         <span className="text-[10px] text-slate-400">
                           ({reminder.patientAge || 'Patient'}y)
                         </span>

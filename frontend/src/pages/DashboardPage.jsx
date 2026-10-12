@@ -30,7 +30,7 @@ import { medicationApi } from '../api/medications';
 import { reminderApi } from '../api/reminders';
 import { apiClient } from '../api/client';
 import { getScopedStorage, setScopedStorage } from '../utils/userStorage';
-import { getCohortPatients, isPatientAssignedToCaregiver } from '../utils/cohort';
+import { getCohortPatients } from '../utils/cohort';
 import { isDemoEmail, WORKING_ACCOUNTS } from '../api/auth';
 import './DashboardPage.css';
 
@@ -165,7 +165,12 @@ export function DashboardPage() {
       const now = new Date();
 
       cohort.forEach((p) => {
-        const pKey = p.email ? p.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+        const pKey = p.email
+          ? p.email
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]/g, '_')
+          : '';
         let pMeds = [];
         try {
           const rawMeds = localStorage.getItem(`pillsync_patient_medications_${pKey}`);
@@ -183,7 +188,8 @@ export function DashboardPage() {
         } catch {}
 
         pMeds.forEach((med) => {
-          const schedules = Array.isArray(med.schedule) && med.schedule.length > 0 ? med.schedule : ['08:00 AM'];
+          const schedules =
+            Array.isArray(med.schedule) && med.schedule.length > 0 ? med.schedule : ['08:00 AM'];
           schedules.forEach((timeStr) => {
             const isPM = timeStr.includes('PM');
             let windowName = 'Morning';
@@ -214,7 +220,9 @@ export function DashboardPage() {
             const existingRecord = pStoredDoses.find(
               (d) =>
                 (d.doseKey && d.doseKey === doseKey) ||
-                (d.medName && d.medName.trim().toLowerCase() === med.name.trim().toLowerCase() && d.time === timeStr)
+                (d.medName &&
+                  d.medName.trim().toLowerCase() === med.name.trim().toLowerCase() &&
+                  d.time === timeStr)
             );
 
             if (existingRecord) {
@@ -267,9 +275,7 @@ export function DashboardPage() {
           let idx = 1;
           data.forEach((med) => {
             const schedules =
-              Array.isArray(med.schedule) && med.schedule.length > 0
-                ? med.schedule
-                : ['08:00 AM'];
+              Array.isArray(med.schedule) && med.schedule.length > 0 ? med.schedule : ['08:00 AM'];
             schedules.forEach((timeStr) => {
               const isPM = timeStr.includes('PM');
               let windowName = 'Morning';
@@ -292,13 +298,21 @@ export function DashboardPage() {
                   (d) =>
                     (d.doseKey && d.doseKey === doseKey) ||
                     (d.medId && String(d.medId) === String(med.id) && d.time === timeStr) ||
-                    (d.medName && d.medName.trim().toLowerCase() === med.name.trim().toLowerCase() && d.time === timeStr) ||
-                    (d.med && d.med.trim().toLowerCase().startsWith(med.name.trim().toLowerCase()) && d.time === timeStr)
+                    (d.medName &&
+                      d.medName.trim().toLowerCase() === med.name.trim().toLowerCase() &&
+                      d.time === timeStr) ||
+                    (d.med &&
+                      d.med.trim().toLowerCase().startsWith(med.name.trim().toLowerCase()) &&
+                      d.time === timeStr)
                 ) ||
                 storedReminders.find(
                   (r) =>
-                    (r.medicationId && String(r.medicationId) === String(med.id) && r.time === timeStr) ||
-                    (r.medicationName && r.medicationName.trim().toLowerCase() === med.name.trim().toLowerCase() && r.time === timeStr)
+                    (r.medicationId &&
+                      String(r.medicationId) === String(med.id) &&
+                      r.time === timeStr) ||
+                    (r.medicationName &&
+                      r.medicationName.trim().toLowerCase() === med.name.trim().toLowerCase() &&
+                      r.time === timeStr)
                 );
 
               let isPastTime = false;
@@ -359,8 +373,7 @@ export function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email, userRole, cohortPatients.length]);
-
+  }, [user, userRole, cohortPatients.length]);
 
   // Live real-time clock ticker
   useEffect(() => {
@@ -406,7 +419,10 @@ export function DashboardPage() {
       if (targetDose) {
         const storedReminders = getScopedStorage('pillsync_reminders', []) || [];
         const syncedReminders = storedReminders.map((r) =>
-          (r.medicationName && targetDose.med && targetDose.med.includes(r.medicationName) && r.time === targetDose.time) ||
+          (r.medicationName &&
+            targetDose.med &&
+            targetDose.med.includes(r.medicationName) &&
+            r.time === targetDose.time) ||
           (r.time === targetDose.time && r.medicationId === targetDose.medId)
             ? { ...r, status: 'taken', takenAt: new Date().toISOString() }
             : r
@@ -443,7 +459,10 @@ export function DashboardPage() {
       if (targetDose) {
         const storedReminders = getScopedStorage('pillsync_reminders', []) || [];
         const syncedReminders = storedReminders.map((r) =>
-          (r.medicationName && targetDose.med && targetDose.med.includes(r.medicationName) && r.time === targetDose.time) ||
+          (r.medicationName &&
+            targetDose.med &&
+            targetDose.med.includes(r.medicationName) &&
+            r.time === targetDose.time) ||
           (r.time === targetDose.time && r.medicationId === targetDose.medId)
             ? { ...r, status: 'missed', takenAt: null }
             : r
@@ -458,9 +477,7 @@ export function DashboardPage() {
   const handleSnoozeDose = (id) => {
     setDoses((prev) => {
       const updated = prev.map((dose) =>
-        dose.id === id || String(dose.id) === String(id)
-          ? { ...dose, status: 'snoozed' }
-          : dose
+        dose.id === id || String(dose.id) === String(id) ? { ...dose, status: 'snoozed' } : dose
       );
       setScopedStorage('pillsync_patient_doses', updated);
       try {
@@ -559,10 +576,8 @@ export function DashboardPage() {
             <p className="dashboard-greeting-subtitle">
               {userRole === 'patient' &&
                 'Personal Care Portal · Adherence Tracking & Medication Schedule'}
-              {userRole === 'caregiver' &&
-                'Active Clinical Oversight · Assigned Patients Cohort'}
-              {userRole === 'admin' &&
-                'Platform Overview & HIPAA Compliance Operations'}
+              {userRole === 'caregiver' && 'Active Clinical Oversight · Assigned Patients Cohort'}
+              {userRole === 'admin' && 'Platform Overview & HIPAA Compliance Operations'}
             </p>
           </div>
 
@@ -571,7 +586,10 @@ export function DashboardPage() {
               <Link
                 to="/patients"
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-sm transition"
-                style={{ background: 'linear-gradient(135deg,#3a9e90,#50b8a9)', boxShadow: '0 3px 12px -3px rgba(58,158,144,0.4)' }}
+                style={{
+                  background: 'linear-gradient(135deg,#3a9e90,#50b8a9)',
+                  boxShadow: '0 3px 12px -3px rgba(58,158,144,0.4)',
+                }}
               >
                 <Users className="h-4 w-4" />
                 View Assigned Patients
@@ -580,7 +598,10 @@ export function DashboardPage() {
               <Link
                 to="/admin/users"
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-sm transition"
-                style={{ background: 'linear-gradient(135deg,#3a9e90,#50b8a9)', boxShadow: '0 3px 12px -3px rgba(58,158,144,0.4)' }}
+                style={{
+                  background: 'linear-gradient(135deg,#3a9e90,#50b8a9)',
+                  boxShadow: '0 3px 12px -3px rgba(58,158,144,0.4)',
+                }}
               >
                 <Users className="h-4 w-4" />
                 Manage User Directory
@@ -589,7 +610,10 @@ export function DashboardPage() {
               <Link
                 to="/medications/new"
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold text-white shadow-sm transition"
-                style={{ background: 'linear-gradient(135deg,#3a9e90,#50b8a9)', boxShadow: '0 3px 12px -3px rgba(58,158,144,0.4)' }}
+                style={{
+                  background: 'linear-gradient(135deg,#3a9e90,#50b8a9)',
+                  boxShadow: '0 3px 12px -3px rgba(58,158,144,0.4)',
+                }}
               >
                 <Plus className="h-4 w-4" />
                 Add Medication
@@ -608,7 +632,9 @@ export function DashboardPage() {
               <div className="dashboard-kpi-card">
                 <div>
                   <p className="dashboard-kpi-label">Assigned Cohort</p>
-                  <p className="dashboard-kpi-value text-indigo-600">{cohortPatients.length} Patients</p>
+                  <p className="dashboard-kpi-value text-indigo-600">
+                    {cohortPatients.length} Patients
+                  </p>
                   <p className="dashboard-kpi-meta text-emerald-600 font-semibold">
                     {cohortPatients.length > 0 ? '100% active monitoring' : 'Roster ready'}
                   </p>
@@ -686,26 +712,67 @@ export function DashboardPage() {
                     </Badge>
                   </div>
 
-                  <div style={{ height: '260px', width: '100%', minHeight: '260px' }} className="flex items-center justify-center">
+                  <div
+                    style={{ height: '260px', width: '100%', minHeight: '260px' }}
+                    className="flex items-center justify-center"
+                  >
                     {cohortPatients.length === 0 ? (
                       <div className="py-14 text-center text-slate-400">
                         <Users className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-slate-700">No cohort telemetry active</p>
+                        <p className="text-xs font-bold text-slate-700">
+                          No cohort telemetry active
+                        </p>
                         <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs mx-auto">
-                          Assign patients to your monitoring roster to stream 7-day adherence telemetry.
+                          Assign patients to your monitoring roster to stream 7-day adherence
+                          telemetry.
                         </p>
                       </div>
                     ) : (
                       <ResponsiveContainer width="100%" height={260}>
                         <BarChart
                           data={[
-                            { day: 'Mon', adherence: 100, onTime: cohortPatients.length * 2, missed: 0 },
-                            { day: 'Tue', adherence: 100, onTime: cohortPatients.length * 2, missed: 0 },
-                            { day: 'Wed', adherence: 95, onTime: cohortPatients.length * 2, missed: 0 },
-                            { day: 'Thu', adherence: 100, onTime: cohortPatients.length * 2, missed: 0 },
-                            { day: 'Fri', adherence: 90, onTime: cohortPatients.length * 2, missed: 0 },
-                            { day: 'Sat', adherence: 100, onTime: cohortPatients.length * 2, missed: 0 },
-                            { day: 'Sun', adherence: 100, onTime: cohortPatients.length * 2, missed: 0 },
+                            {
+                              day: 'Mon',
+                              adherence: 100,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
+                            {
+                              day: 'Tue',
+                              adherence: 100,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
+                            {
+                              day: 'Wed',
+                              adherence: 95,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
+                            {
+                              day: 'Thu',
+                              adherence: 100,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
+                            {
+                              day: 'Fri',
+                              adherence: 90,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
+                            {
+                              day: 'Sat',
+                              adherence: 100,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
+                            {
+                              day: 'Sun',
+                              adherence: 100,
+                              onTime: cohortPatients.length * 2,
+                              missed: 0,
+                            },
                           ]}
                           margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                         >
@@ -809,9 +876,12 @@ export function DashboardPage() {
                     {cohortPatients.length === 0 ? (
                       <div className="py-12 text-center text-slate-400">
                         <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-slate-700">All Patient Triage Queues Clear</p>
+                        <p className="text-xs font-bold text-slate-700">
+                          All Patient Triage Queues Clear
+                        </p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          No critical missed doses or refill escalations pending across your monitored cohort.
+                          No critical missed doses or refill escalations pending across your
+                          monitored cohort.
                         </p>
                       </div>
                     ) : (
@@ -878,7 +948,9 @@ export function DashboardPage() {
                     {doses.length === 0 ? (
                       <div className="py-12 text-center text-slate-400">
                         <Clock className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-slate-700">No scheduled cohort doses today</p>
+                        <p className="text-xs font-bold text-slate-700">
+                          No scheduled cohort doses today
+                        </p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
                           Assigned patient intake schedules will be tracked here in real time.
                         </p>
@@ -963,9 +1035,12 @@ export function DashboardPage() {
                     {cohortPatients.length === 0 ? (
                       <div className="py-8 text-center text-slate-400">
                         <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                        <p className="text-xs font-bold text-slate-700">No recent patient inquiries</p>
+                        <p className="text-xs font-bold text-slate-700">
+                          No recent patient inquiries
+                        </p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          Direct messages and vital updates from monitored patients will appear here.
+                          Direct messages and vital updates from monitored patients will appear
+                          here.
                         </p>
                       </div>
                     ) : (
@@ -1023,7 +1098,9 @@ export function DashboardPage() {
                   <p className="dashboard-kpi-label">Total Platform Users</p>
                   <p className="dashboard-kpi-value text-indigo-600">{adminUsers.length || 0}</p>
                   <p className="dashboard-kpi-meta text-emerald-600 font-semibold">
-                    {adminUsers.length > 0 ? `${adminUsers.length} verified accounts` : 'Zero registered accounts'}
+                    {adminUsers.length > 0
+                      ? `${adminUsers.length} verified accounts`
+                      : 'Zero registered accounts'}
                   </p>
                 </div>
                 <div className="dashboard-kpi-icon bg-indigo-50 text-indigo-600">
@@ -1184,16 +1261,23 @@ export function DashboardPage() {
                                 isAdmin
                                   ? 'bg-purple-100 text-purple-700'
                                   : isCaregiver
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : 'bg-indigo-100 text-indigo-700'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-indigo-100 text-indigo-700'
                               }`}
                             >
                               {initials}
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-slate-900 m-0">{u.name || u.email}</p>
+                              <p className="text-xs font-bold text-slate-900 m-0">
+                                {u.name || u.email}
+                              </p>
                               <p className="text-[11px] text-slate-500 m-0">
-                                {u.email} · {u.role === 'admin' ? 'System Administrator' : u.role === 'caregiver' ? 'Clinical Caregiver' : 'Patient Account'}
+                                {u.email} ·{' '}
+                                {u.role === 'admin'
+                                  ? 'System Administrator'
+                                  : u.role === 'caregiver'
+                                    ? 'Clinical Caregiver'
+                                    : 'Patient Account'}
                               </p>
                             </div>
                           </div>
@@ -1238,7 +1322,8 @@ export function DashboardPage() {
                             <span className="text-[10px] text-slate-400">Live</span>
                           </div>
                           <p className="text-slate-600 m-0 text-[11px]">
-                            {u.name || u.email} assigned {u.role ? u.role.toUpperCase() : 'PATIENT'} credentials.
+                            {u.name || u.email} assigned {u.role ? u.role.toUpperCase() : 'PATIENT'}{' '}
+                            credentials.
                           </p>
                         </div>
                       ))
@@ -1327,7 +1412,9 @@ export function DashboardPage() {
             <div className="koru-dashboard-ribbon">
               <div className="koru-ribbon-streak-box">
                 <div className="koru-ribbon-streak-title">
-                  <span className="font-extrabold text-slate-900 text-sm">7-Day Consistency Streak</span>
+                  <span className="font-extrabold text-slate-900 text-sm">
+                    7-Day Consistency Streak
+                  </span>
                   <span className="text-xs text-emerald-800 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
                     {takenCount > 0 ? '1-Day Streak 🔥' : 'Start Today!'}
                   </span>
@@ -1352,7 +1439,9 @@ export function DashboardPage() {
 
               <div className="koru-ribbon-reminder-box">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 m-0">Never miss your medications.</h4>
+                  <h4 className="text-sm font-bold text-slate-900 m-0">
+                    Never miss your medications.
+                  </h4>
                   <p className="text-xs text-slate-600 m-0 mt-0.5">
                     {patientCheckedIn
                       ? 'Daily check-in recorded! Streak active and doses logged.'
@@ -1572,9 +1661,12 @@ export function DashboardPage() {
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3">
                           <Clock className="h-6 w-6" />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-800">No scheduled doses for today</h3>
+                        <h3 className="text-sm font-bold text-slate-800">
+                          No scheduled doses for today
+                        </h3>
                         <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                          Add your prescriptions to automatically generate your daily intake schedule and reminders.
+                          Add your prescriptions to automatically generate your daily intake
+                          schedule and reminders.
                         </p>
                         <Link
                           to="/medications/new"
@@ -1607,7 +1699,10 @@ export function DashboardPage() {
                     </div>
                   </div>
 
-                  <div style={{ height: '240px', width: '100%', minHeight: '240px' }} className="flex items-center justify-center">
+                  <div
+                    style={{ height: '240px', width: '100%', minHeight: '240px' }}
+                    className="flex items-center justify-center"
+                  >
                     {patientDoses.length === 0 ? (
                       <div className="py-12 text-center text-slate-400">
                         <TrendingUp className="h-8 w-8 text-slate-300 mx-auto mb-2" />
@@ -1686,13 +1781,17 @@ export function DashboardPage() {
                         Real-time daily intake compliance evaluation
                       </p>
                     </div>
-                    <Badge variant="success" size="xs">Optimal</Badge>
+                    <Badge variant="success" size="xs">
+                      Optimal
+                    </Badge>
                   </div>
 
                   <div className="koru-gauge-interactive-box">
                     <div className="koru-face-indicator">
                       <span className="text-3xl">😊</span>
-                      <span className="text-xs font-extrabold text-emerald-800 uppercase tracking-wider">Optimal / 94% Target</span>
+                      <span className="text-xs font-extrabold text-emerald-800 uppercase tracking-wider">
+                        Optimal / 94% Target
+                      </span>
                     </div>
 
                     <div className="koru-arch-gauge-container">
@@ -1812,13 +1911,17 @@ export function DashboardPage() {
                   <div className="dashboard-alert-banner">
                     <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="text-xs font-bold text-rose-900">Prescription Refill Warning</h3>
+                      <h3 className="text-xs font-bold text-rose-900">
+                        Prescription Refill Warning
+                      </h3>
                       <p className="text-xs text-rose-700 mt-0.5 leading-relaxed">
                         <strong>{userMeds.find((m) => m.quantity <= 10)?.name}</strong> has a low
                         tablet count remaining in your active supply.
                       </p>
                       <button
-                        onClick={() => alert('Refill request dispatched to clinical pharmacy partner!')}
+                        onClick={() =>
+                          alert('Refill request dispatched to clinical pharmacy partner!')
+                        }
                         className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-bold text-white hover:bg-rose-700 transition cursor-pointer"
                       >
                         Request 30-Day Refill Now
@@ -1836,7 +1939,8 @@ export function DashboardPage() {
                         Prescription Supply Healthy
                       </h3>
                       <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
-                        All active prescriptions have sufficient dosage quantities remaining. Automatic tracking active.
+                        All active prescriptions have sufficient dosage quantities remaining.
+                        Automatic tracking active.
                       </p>
                     </div>
                   </div>
@@ -1861,7 +1965,9 @@ export function DashboardPage() {
 
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => alert('Clinical support hotline: 1-800-PILLSYNC (24/7 Support)')}
+                        onClick={() =>
+                          alert('Clinical support hotline: 1-800-PILLSYNC (24/7 Support)')
+                        }
                         className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition"
                         title="Contact Clinical Support"
                       >

@@ -45,12 +45,15 @@ export function getChatbotResponse(userQuery, context = {}) {
   // Helper to format response
   const reply = (text, suggestions = []) => ({
     text: text.trim(),
-    suggestions: suggestions.length > 0 ? suggestions : [
-      'What medicines do I take?',
-      'When is my next dose?',
-      'Check my adherence',
-      'What if I miss a dose?',
-    ],
+    suggestions:
+      suggestions.length > 0
+        ? suggestions
+        : [
+            'What medicines do I take?',
+            'When is my next dose?',
+            'Check my adherence',
+            'What if I miss a dose?',
+          ],
     toString() {
       return this.text;
     },
@@ -131,11 +134,7 @@ export function getChatbotResponse(userQuery, context = {}) {
 
     return reply(
       `Here is your active medication care plan:\n\n${medLines}${statusNote}\n\nYou can click "Take Dose" directly on your Dashboard or Reminders page whenever you take your dose!`,
-      [
-        'When is my next dose?',
-        'Check my adherence',
-        'What if I miss a dose?',
-      ]
+      ['When is my next dose?', 'Check my adherence', 'What if I miss a dose?']
     );
   }
 
@@ -189,13 +188,16 @@ export function getChatbotResponse(userQuery, context = {}) {
     const taken = takenDoses.length;
     const rate = total > 0 ? Math.round((taken / total) * 100) : 100;
 
-    let evalMessage = '';
+    let evalMessage;
     if (rate >= 90) {
-      evalMessage = '🌟 Outstanding adherence! Consistency keeps therapeutic blood levels stable and prevents complications.';
+      evalMessage =
+        '🌟 Outstanding adherence! Consistency keeps therapeutic blood levels stable and prevents complications.';
     } else if (rate >= 70) {
-      evalMessage = '👍 Good progress! Remember to log your remaining doses today to keep your streak going.';
+      evalMessage =
+        '👍 Good progress! Remember to log your remaining doses today to keep your streak going.';
     } else {
-      evalMessage = '⚠️ Your adherence rate is below target. Consistent intake ensures your treatment remains effective. Reach out to your caregiver if you need assistance.';
+      evalMessage =
+        '⚠️ Your adherence rate is below target. Consistent intake ensures your treatment remains effective. Reach out to your caregiver if you need assistance.';
     }
 
     return reply(
@@ -291,14 +293,22 @@ export function getChatbotResponse(userQuery, context = {}) {
     );
   }
 
-  if (normalized.includes('lisinopril') || normalized.includes('amlodipine') || normalized.includes('losartan')) {
+  if (
+    normalized.includes('lisinopril') ||
+    normalized.includes('amlodipine') ||
+    normalized.includes('losartan')
+  ) {
     return reply(
       `💊 Blood Pressure Medication (ACE/ARB/CCB):\n• Purpose: Controls hypertension and protects heart/kidney function.\n• Clinical Tip: Take at the same time each day. Avoid sudden standing from a sitting or lying position to prevent dizziness. Stay well hydrated!`,
       ['What medicines do I take?', 'When is my next dose?', 'Side effects guidance']
     );
   }
 
-  if (normalized.includes('atorvastatin') || normalized.includes('rosuvastatin') || normalized.includes('statin')) {
+  if (
+    normalized.includes('atorvastatin') ||
+    normalized.includes('rosuvastatin') ||
+    normalized.includes('statin')
+  ) {
     return reply(
       `💊 Statin (Cholesterol) Information:\n• Purpose: Lowers LDL cholesterol and protects cardiovascular health.\n• Administration: Best taken in the evening with or without food.\n• Caution: Avoid large amounts of grapefruit or grapefruit juice, which can increase medication concentration.`,
       ['What medicines do I take?', 'When is my next dose?', 'Food & water advice']
@@ -326,7 +336,11 @@ export function getChatbotResponse(userQuery, context = {}) {
     );
   }
 
-  if (normalized.includes('aspirin') || normalized.includes('ibuprofen') || normalized.includes('advil')) {
+  if (
+    normalized.includes('aspirin') ||
+    normalized.includes('ibuprofen') ||
+    normalized.includes('advil')
+  ) {
     return reply(
       `💊 NSAID / Pain Relief:\n• Purpose: Pain, inflammation, or cardiovascular prevention.\n• Caution: Always take with food or milk to prevent gastric irritation. Drink a full glass of water.`,
       ['What medicines do I take?', 'When is my next dose?', 'Side effects guidance']

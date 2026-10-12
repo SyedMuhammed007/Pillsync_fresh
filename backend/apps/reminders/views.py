@@ -30,7 +30,9 @@ class TodayReminderListView(generics.ListAPIView):
     serializer_class = ReminderSerializer
 
     def get_queryset(self):
-        from datetime import date as dt_date, datetime, time
+        from datetime import date as dt_date
+        from datetime import datetime, time
+
         from django.db.models import Q
 
         patient_id = (

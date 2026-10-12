@@ -1,9 +1,8 @@
 import { apiClient, USE_MOCK_API } from './client';
-import { getScopedStorage, setScopedStorage, getCurrentUser } from '../utils/userStorage';
+import { getScopedStorage, setScopedStorage } from '../utils/userStorage';
 
 // Real dynamic reminders storage linked to user's saved medications (Zero dummy data)
 function getStoredReminders() {
-  const currentUser = getCurrentUser();
   const existingReminders = getScopedStorage('pillsync_reminders', []) || [];
   let meds = getScopedStorage('pillsync_patient_medications', null);
 
@@ -12,7 +11,6 @@ function getStoredReminders() {
   }
 
   const todayStr = new Date().toISOString().split('T')[0];
-  let rId = 1;
   const merged = [];
 
   meds.forEach((m) => {
@@ -27,11 +25,16 @@ function getStoredReminders() {
         (er) =>
           String(er.id) === String(generatedId) ||
           (er.medicationId && String(er.medicationId) === String(m.id) && er.time === timeStr) ||
-          (er.medicationName && er.medicationName.trim().toLowerCase() === m.name.trim().toLowerCase() && er.time === timeStr)
+          (er.medicationName &&
+            er.medicationName.trim().toLowerCase() === m.name.trim().toLowerCase() &&
+            er.time === timeStr)
       );
 
-      const isToday = existing && (existing.date === todayStr || (existing.takenAt && existing.takenAt.split('T')[0] === todayStr));
-      const preservedStatus = (existing && isToday) ? (existing.status || 'upcoming') : 'upcoming';
+      const isToday =
+        existing &&
+        (existing.date === todayStr ||
+          (existing.takenAt && existing.takenAt.split('T')[0] === todayStr));
+      const preservedStatus = existing && isToday ? existing.status || 'upcoming' : 'upcoming';
 
       if (existing) {
         merged.push({
@@ -59,7 +62,6 @@ function getStoredReminders() {
           nextReminder: todayStr,
         });
       }
-      rId++;
     });
   });
 
@@ -71,7 +73,9 @@ function saveStoredReminders(rems) {
   setScopedStorage('pillsync_reminders', rems);
   try {
     localStorage.setItem('pillsync_reminders', JSON.stringify(rems));
-  } catch {}
+  } catch {
+    // ignore localStorage failure
+  }
 }
 
 const mockReminderApi = {

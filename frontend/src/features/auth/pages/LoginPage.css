@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at 10% 20%, rgba(58, 158, 144, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 10% 20%, rgba(58, 158, 144, 0.1) 0%, transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(78, 127, 103, 0.08) 0%, transparent 40%), #f5faf8;
   padding: 1.5rem 1rem;
   box-sizing: border-box;
@@ -371,14 +371,14 @@
   font-size: 0.875rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(58, 158, 144, 0.30);
+  box-shadow: 0 4px 14px rgba(58, 158, 144, 0.3);
   transition: all 120ms ease;
 }
 
 .login-submit-btn:hover {
   background: linear-gradient(135deg, #2d8275 0%, #3a9e90 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(58, 158, 144, 0.40);
+  box-shadow: 0 6px 18px rgba(58, 158, 144, 0.4);
 }
 
 .login-submit-btn:disabled {

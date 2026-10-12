@@ -4,7 +4,7 @@ import { generateJWT, decodeJWT } from '../utils/jwt';
 const DEFAULT_SYS_CRED = ['sonu', '@', '7860'].join('');
 
 // Dedicated Permanent Admin Account
-const SYSTEM_ADMIN_USER = {
+export const SYSTEM_ADMIN_USER = {
   id: 'u-admin-syed',
   email: 'syedmuhammedsr@gmail.com',
   name: 'Syed Muhammed',
@@ -165,7 +165,9 @@ function getRegisteredUsers() {
 
   try {
     localStorage.setItem('pillsync_registered_users', JSON.stringify(users));
-  } catch {}
+  } catch {
+    // ignore localStorage failure
+  }
   return users;
 }
 
@@ -299,7 +301,9 @@ const mockAuthApi = {
     const role = (data.role || 'patient').toLowerCase();
 
     if (role === 'admin') {
-      throw new Error('Administrative registration is restricted. Administrator accounts can only sign in.');
+      throw new Error(
+        'Administrative registration is restricted. Administrator accounts can only sign in.'
+      );
     }
 
     const newUser = {
@@ -474,7 +478,7 @@ const realAuthApi = {
       }
 
       if (backendErr.response?.data?.detail) {
-        throw new Error(backendErr.response.data.detail);
+        throw new Error(backendErr.response.data.detail, { cause: backendErr });
       }
       throw backendErr;
     }
@@ -485,7 +489,9 @@ const realAuthApi = {
     const roleLower = (data.role || 'patient').toLowerCase();
 
     if (roleLower === 'admin') {
-      throw new Error('Administrative registration is restricted. Administrator accounts can only sign in.');
+      throw new Error(
+        'Administrative registration is restricted. Administrator accounts can only sign in.'
+      );
     }
 
     const roleUpper = roleLower.toUpperCase();
@@ -515,7 +521,7 @@ const realAuthApi = {
           password: data.password,
           role: roleUpper,
         });
-      } catch (regErr) {
+      } catch {
         await apiClient.post('/auth/users/', {
           email: normalizedEmail,
           name: fullName,

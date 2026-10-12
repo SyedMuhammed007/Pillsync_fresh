@@ -47,10 +47,7 @@ export function Layout({ children }) {
       </header>
 
       {/* Floating Desktop Sidebar / Slide-out Mobile Drawer */}
-      <Sidebar
-        mobileOpen={mobileMenuOpen}
-        onCloseMobile={() => setMobileMenuOpen(false)}
-      />
+      <Sidebar mobileOpen={mobileMenuOpen} onCloseMobile={() => setMobileMenuOpen(false)} />
 
       <div className="layout-main-wrapper">
         <main className="layout-content-scroll">
@@ -66,4 +63,3 @@ export function Layout({ children }) {
 
 export { Sidebar } from './Sidebar';
 export { MobileNav } from './MobileNav';
-

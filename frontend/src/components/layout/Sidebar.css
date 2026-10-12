@@ -21,7 +21,12 @@
   border-radius: 0 1.5rem 1.5rem 0;
   border: 1px solid rgba(214, 243, 237, 0.95);
   border-left: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 252, 250, 0.96) 50%, rgba(241, 248, 245, 0.98) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 252, 250, 0.96) 50%,
+    rgba(241, 248, 245, 0.98) 100%
+  );
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   box-shadow: 0 25px 60px -10px rgba(15, 23, 42, 0.28);
@@ -51,8 +56,12 @@
 }
 
 @keyframes fadeInSidebarBackdrop {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Mobile Close Button */
@@ -76,8 +85,12 @@
 }
 
 @keyframes floatSidebarExecutive {
-  0%   { transform: translateY(0px); }
-  100% { transform: translateY(-4px); }
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
 }
 
 /* Desktop Floating Sidebar Styles (>= 768px) */
@@ -113,7 +126,9 @@
 }
 
 /* Minimal Slate/Mint Scrollbar */
-.sidebar-container::-webkit-scrollbar { width: 4px; }
+.sidebar-container::-webkit-scrollbar {
+  width: 4px;
+}
 .sidebar-container::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 9999px;
@@ -327,7 +342,9 @@
   border-radius: 1.15rem;
   background-color: #ffffff;
   border: 1px solid rgba(214, 243, 237, 0.95);
-  box-shadow: 0 4px 16px -3px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(45, 130, 117, 0.04);
+  box-shadow:
+    0 4px 16px -3px rgba(15, 23, 42, 0.06),
+    0 2px 6px -1px rgba(45, 130, 117, 0.04);
 }
 
 .sidebar-user-card {

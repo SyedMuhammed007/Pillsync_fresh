@@ -110,7 +110,8 @@ export function NotificationsPage() {
       type: 'alert',
       priority: 'high',
       title: 'Scheduled Intake Alert: Lisinopril 10mg',
-      message: 'Reminder: It is time for your morning hypertension regimen. Please take with water.',
+      message:
+        'Reminder: It is time for your morning hypertension regimen. Please take with water.',
       time: 'Just now',
       unread: true,
       patient: isCaregiver ? 'Monitored Patient' : undefined,
@@ -324,7 +325,9 @@ export function NotificationsPage() {
                                 {reply.time}
                               </span>
                             </div>
-                            <p className="text-slate-700 m-0 text-xs leading-relaxed">{reply.text}</p>
+                            <p className="text-slate-700 m-0 text-xs leading-relaxed">
+                              {reply.text}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -442,8 +445,8 @@ export function NotificationsPage() {
                 <span>Cohort Communication Hub</span>
               </div>
               <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-                Messages sent by patients via their portal are routed directly to
-                this inbox with instant telemetry.
+                Messages sent by patients via their portal are routed directly to this inbox with
+                instant telemetry.
               </p>
               <ul>
                 <li>

@@ -16,7 +16,7 @@ def user(db):
     return User.objects.create_user(
         email="notify_user@example.com",
         full_name="Notify User",
-        password="password123",
+        password="password123",  # pragma: allowlist secret
         role=UserRole.PATIENT,
     )
 

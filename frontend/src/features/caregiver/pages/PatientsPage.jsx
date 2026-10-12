@@ -150,7 +150,9 @@ export function PatientsPage() {
         setRegisteredUsers(serverUsers);
         try {
           localStorage.setItem('pillsync_registered_users', JSON.stringify(serverUsers));
-        } catch (e) {}
+        } catch {
+          // ignore localStorage error
+        }
 
         const serverPatients = serverUsers.filter(
           (u) =>
@@ -172,7 +174,10 @@ export function PatientsPage() {
             );
 
             if (existsIdx >= 0) {
-              if (merged[existsIdx].assignedCaregiver !== sp.assignedCaregiver && sp.assignedCaregiver) {
+              if (
+                merged[existsIdx].assignedCaregiver !== sp.assignedCaregiver &&
+                sp.assignedCaregiver
+              ) {
                 merged[existsIdx] = {
                   ...merged[existsIdx],
                   assignedCaregiver: sp.assignedCaregiver,
@@ -200,7 +205,9 @@ export function PatientsPage() {
           if (changed) {
             try {
               localStorage.setItem('pillsync_assigned_patients', JSON.stringify(merged));
-            } catch (e) {}
+            } catch {
+              // ignore localStorage error
+            }
           }
           return merged;
         });
@@ -264,9 +271,9 @@ export function PatientsPage() {
         phone: found.phone || prev.phone || '+1 555-0199',
         assignedCaregiver: isCaregiver
           ? myCaregiverName
-          : (found.assignedCaregiver && found.assignedCaregiver !== 'Unassigned'
-              ? found.assignedCaregiver
-              : myCaregiverName),
+          : found.assignedCaregiver && found.assignedCaregiver !== 'Unassigned'
+            ? found.assignedCaregiver
+            : myCaregiverName,
       }));
     }
   };
@@ -277,11 +284,12 @@ export function PatientsPage() {
 
     const patientName = newPatient.name.trim();
     const patientEmail =
-      newPatient.email.trim() ||
-      `${patientName.toLowerCase().replace(/\s+/g, '.')}@patient.local`;
+      newPatient.email.trim() || `${patientName.toLowerCase().replace(/\s+/g, '.')}@patient.local`;
 
     const myCaregiverName = user?.name || user?.email?.split('@')[0] || 'Caregiver Clinician';
-    const targetCaregiver = isCaregiver ? myCaregiverName : (newPatient.assignedCaregiver || myCaregiverName);
+    const targetCaregiver = isCaregiver
+      ? myCaregiverName
+      : newPatient.assignedCaregiver || myCaregiverName;
 
     let created = {
       id: selectedRegUser || `pt-${Date.now()}`,
@@ -351,8 +359,7 @@ export function PatientsPage() {
       created,
       ...patients.filter(
         (p) =>
-          p.name.toLowerCase() !== patientName.toLowerCase() &&
-          String(p.id) !== String(created.id)
+          p.name.toLowerCase() !== patientName.toLowerCase() && String(p.id) !== String(created.id)
       ),
     ];
     setPatients(updated);
@@ -372,17 +379,11 @@ export function PatientsPage() {
       assignedCaregiver: isCaregiver ? myCaregiverName : 'Caregiver Clinician',
     });
 
-    showToast(
-      `Assigned ${created.name} under ${created.assignedCaregiver}'s care!`
-    );
+    showToast(`Assigned ${created.name} under ${created.assignedCaregiver}'s care!`);
   };
 
   const handleUnassignPatient = async (patientId, patientName) => {
-    if (
-      !window.confirm(
-        `Unassign ${patientName || 'this patient'} from the caregiver roster?`
-      )
-    ) {
+    if (!window.confirm(`Unassign ${patientName || 'this patient'} from the caregiver roster?`)) {
       return;
     }
 
@@ -412,10 +413,7 @@ export function PatientsPage() {
             }
             return u;
           });
-          localStorage.setItem(
-            'pillsync_registered_users',
-            JSON.stringify(updatedReg)
-          );
+          localStorage.setItem('pillsync_registered_users', JSON.stringify(updatedReg));
           setRegisteredUsers(updatedReg);
         }
       }
@@ -428,9 +426,7 @@ export function PatientsPage() {
 
   const handleChangeCaregiver = async (patientId, newCaregiver) => {
     const updated = patients.map((p) =>
-      String(p.id) === String(patientId)
-        ? { ...p, assignedCaregiver: newCaregiver }
-        : p
+      String(p.id) === String(patientId) ? { ...p, assignedCaregiver: newCaregiver } : p
     );
     setPatients(updated);
     localStorage.setItem('pillsync_assigned_patients', JSON.stringify(updated));
@@ -458,10 +454,7 @@ export function PatientsPage() {
             }
             return u;
           });
-          localStorage.setItem(
-            'pillsync_registered_users',
-            JSON.stringify(updatedReg)
-          );
+          localStorage.setItem('pillsync_registered_users', JSON.stringify(updatedReg));
           setRegisteredUsers(updatedReg);
         }
       }
@@ -491,8 +484,7 @@ export function PatientsPage() {
 
     if (selectedRisk === 'all') return matchesSearch;
     if (selectedRisk === 'high_risk') return matchesSearch && p.adherence < 70;
-    if (selectedRisk === 'moderate')
-      return matchesSearch && p.adherence >= 70 && p.adherence < 85;
+    if (selectedRisk === 'moderate') return matchesSearch && p.adherence >= 70 && p.adherence < 85;
     if (selectedRisk === 'adherent') return matchesSearch && p.adherence >= 85;
     return matchesSearch;
   });
@@ -500,10 +492,7 @@ export function PatientsPage() {
   const highRiskCount = baseCohort.filter((p) => p.adherence < 70).length;
   const avgAdherence =
     baseCohort.length > 0
-      ? Math.round(
-          baseCohort.reduce((acc, p) => acc + (p.adherence || 100), 0) /
-            baseCohort.length
-        )
+      ? Math.round(baseCohort.reduce((acc, p) => acc + (p.adherence || 100), 0) / baseCohort.length)
       : 100;
 
   const availableRegisteredPatients = registeredUsers.filter(
@@ -533,7 +522,8 @@ export function PatientsPage() {
               )}
             </div>
             <p className="patients-subtitle">
-              Caregiver &amp; Clinical team oversight: Real-time adherence tracking, dedicated caregiver assignments, and patient telemetry
+              Caregiver &amp; Clinical team oversight: Real-time adherence tracking, dedicated
+              caregiver assignments, and patient telemetry
             </p>
           </div>
 
@@ -603,7 +593,9 @@ export function PatientsPage() {
             </div>
             <p className="patients-kpi-subtext text-rose-600">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-rose-500" />
-              {highRiskCount > 0 ? 'Requires immediate dose follow-up' : 'Zero critical risk alerts'}
+              {highRiskCount > 0
+                ? 'Requires immediate dose follow-up'
+                : 'Zero critical risk alerts'}
             </p>
           </div>
         </div>
@@ -624,7 +616,9 @@ export function PatientsPage() {
           {/* Caregiver Filter Selection */}
           {isAdmin ? (
             <div className="flex items-center gap-2 overflow-x-auto py-1">
-              <span className="text-xs font-bold text-slate-600 shrink-0">Filter by Caregiver:</span>
+              <span className="text-xs font-bold text-slate-600 shrink-0">
+                Filter by Caregiver:
+              </span>
               <select
                 value={selectedCaregiver}
                 onChange={(e) => setSelectedCaregiver(e.target.value)}
@@ -633,7 +627,12 @@ export function PatientsPage() {
                 <option value="all">All Caregivers ({patients.length})</option>
                 {caregiverOptions.map((c) => (
                   <option key={c} value={c}>
-                    {c} ({patients.filter((p) => p.assignedCaregiver?.toLowerCase() === c.toLowerCase()).length})
+                    {c} (
+                    {
+                      patients.filter((p) => p.assignedCaregiver?.toLowerCase() === c.toLowerCase())
+                        .length
+                    }
+                    )
                   </option>
                 ))}
               </select>
@@ -642,14 +641,19 @@ export function PatientsPage() {
             <div className="flex items-center gap-2 overflow-x-auto py-1">
               <span className="text-xs font-bold text-slate-600 shrink-0">Assigned Caregiver:</span>
               <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 shadow-2xs">
-                {user?.name || user?.email} ({baseCohort.length} {baseCohort.length === 1 ? 'Patient' : 'Patients'})
+                {user?.name || user?.email} ({baseCohort.length}{' '}
+                {baseCohort.length === 1 ? 'Patient' : 'Patients'})
               </span>
             </div>
           )}
 
           <div className="patients-filter-bar">
             {[
-              { id: 'all', label: isCaregiver ? 'Assigned Patients' : 'All Patients', count: baseCohort.length },
+              {
+                id: 'all',
+                label: isCaregiver ? 'Assigned Patients' : 'All Patients',
+                count: baseCohort.length,
+              },
               { id: 'high_risk', label: 'High Risk (<70%)', count: highRiskCount },
               {
                 id: 'moderate',
@@ -690,7 +694,8 @@ export function PatientsPage() {
               </div>
               <h3 className="text-base font-bold text-slate-800">No matching patients found</h3>
               <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                No patients match the current filter or caregiver selection. Assign new patients or adjust your filter.
+                No patients match the current filter or caregiver selection. Assign new patients or
+                adjust your filter.
               </p>
               <button
                 type="button"
@@ -791,8 +796,8 @@ export function PatientsPage() {
                     <div className="patient-detail-row text-slate-500">
                       <Pill className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                       <span>
-                        {patient.prescriptionsCount || patient.activePrescriptions || 1}{' '}
-                        Active Prescriptions
+                        {patient.prescriptionsCount || patient.activePrescriptions || 1} Active
+                        Prescriptions
                       </span>
                     </div>
                     <div className="patient-detail-row text-slate-500">
@@ -834,9 +839,7 @@ export function PatientsPage() {
                   <div className="patient-actions-row">
                     <button onClick={() => handleNudge(patient)} className="patient-nudge-btn">
                       <Send className="h-3.5 w-3.5" />
-                      <span>
-                        {nudgedPatientId === patient.id ? 'Nudge Sent! ✓' : 'Send Nudge'}
-                      </span>
+                      <span>{nudgedPatientId === patient.id ? 'Nudge Sent! ✓' : 'Send Nudge'}</span>
                     </button>
 
                     {patient.phone && (
@@ -993,9 +996,7 @@ export function PatientsPage() {
                   <input
                     type="text"
                     value={newPatient.condition}
-                    onChange={(e) =>
-                      setNewPatient({ ...newPatient, condition: e.target.value })
-                    }
+                    onChange={(e) => setNewPatient({ ...newPatient, condition: e.target.value })}
                     className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                   />
                 </div>

@@ -75,22 +75,14 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }) {
     <>
       {/* Mobile Backdrop Overlay */}
       {mobileOpen && (
-        <div
-          className="sidebar-mobile-backdrop"
-          onClick={onCloseMobile}
-          aria-hidden="true"
-        />
+        <div className="sidebar-mobile-backdrop" onClick={onCloseMobile} aria-hidden="true" />
       )}
 
       <aside className={`sidebar-container ${mobileOpen ? 'sidebar-mobile-open' : ''}`}>
         <div>
           {/* Brand Header */}
           <div className="sidebar-brand-header">
-            <Link
-              to={homePortalPath}
-              className="sidebar-brand-link"
-              onClick={onCloseMobile}
-            >
+            <Link to={homePortalPath} className="sidebar-brand-link" onClick={onCloseMobile}>
               <div className="sidebar-logo-icon-box">
                 <PillSyncIcon className="h-5 w-5 text-white" />
               </div>
@@ -169,7 +161,9 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }) {
               </div>
               <div className="sidebar-user-meta">
                 <p className="sidebar-user-name truncate">{user?.name || 'User Profile'}</p>
-                <span className="sidebar-user-email truncate">{user?.email || 'Active Session'}</span>
+                <span className="sidebar-user-email truncate">
+                  {user?.email || 'Active Session'}
+                </span>
               </div>
             </Link>
             <button

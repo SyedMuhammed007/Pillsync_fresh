@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/useAuth';
 import { Alert, PillSyncIcon } from '../../../components/common';
-import { Mail, Pill, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { isValidEmail } from '../../../utils/validation';
 import './ForgotPasswordPage.css';
 

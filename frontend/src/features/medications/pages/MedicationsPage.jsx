@@ -32,7 +32,9 @@ export function MedicationsPage() {
 
   const userRole = (user?.role || 'patient').toLowerCase();
   const isCaregiver = userRole === 'caregiver' || userRole === 'admin';
-  const [cohortPatientFilters, setCohortPatientFilters] = useState(() => getCohortPatientNames(user));
+  const [cohortPatientFilters, setCohortPatientFilters] = useState(() =>
+    getCohortPatientNames(user)
+  );
 
   useEffect(() => {
     setCohortPatientFilters(getCohortPatientNames(user));
@@ -47,7 +49,12 @@ export function MedicationsPage() {
           const cohort = getCohortPatients(user);
           const allCohortMeds = [];
           cohort.forEach((p) => {
-            const pKey = p.email ? p.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') : '';
+            const pKey = p.email
+              ? p.email
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, '_')
+              : '';
             let pMeds = [];
             try {
               const raw = localStorage.getItem(`pillsync_patient_medications_${pKey}`);
@@ -91,8 +98,7 @@ export function MedicationsPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email, userRole]);
-
+  }, [user, userRole]);
 
   const displayedList = medications;
 

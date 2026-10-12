@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/useAuth';
 import {
-  Pill,
   Sparkles,
   ArrowRight,
   Clock,
@@ -63,10 +62,18 @@ export function LandingPage() {
           </Link>
 
           <div className="koru-nav-links">
-            <a href="#features" className="koru-nav-link">Features</a>
-            <a href="#showcase" className="koru-nav-link">Experience</a>
-            <a href="#adherence" className="koru-nav-link">Adherence AI</a>
-            <a href="#caregivers" className="koru-nav-link">Care Team</a>
+            <a href="#features" className="koru-nav-link">
+              Features
+            </a>
+            <a href="#showcase" className="koru-nav-link">
+              Experience
+            </a>
+            <a href="#adherence" className="koru-nav-link">
+              Adherence AI
+            </a>
+            <a href="#caregivers" className="koru-nav-link">
+              Care Team
+            </a>
           </div>
 
           <div className="koru-nav-actions">
@@ -95,8 +102,8 @@ export function LandingPage() {
                     user.role === 'caregiver'
                       ? '/caregiver/portal'
                       : user.role === 'admin'
-                      ? '/admin/portal'
-                      : '/patient/portal'
+                        ? '/admin/portal'
+                        : '/patient/portal'
                   }
                   className="koru-btn-dark"
                 >
@@ -134,7 +141,8 @@ export function LandingPage() {
             </div>
 
             <h1 className="koru-hero-title">
-              Your Wellness<br />
+              Your Wellness
+              <br />
               <span className="koru-title-accent">Companion</span>
             </h1>
 
@@ -147,7 +155,8 @@ export function LandingPage() {
             </div>
 
             <p className="koru-hero-desc">
-              Empowering your wellness journey: easily track medications, monitor adherence with clinical accuracy, and provide real-time feedback to your healthcare providers.
+              Empowering your wellness journey: easily track medications, monitor adherence with
+              clinical accuracy, and provide real-time feedback to your healthcare providers.
             </p>
 
             <div className="koru-hero-cta-row">
@@ -240,19 +249,22 @@ export function LandingPage() {
                   { day: 14, done: true, today: false },
                   { day: 15, done: true, today: false },
                   { day: 16, done: true, today: false },
-                  { day: 17, done: isCheckedIn || (dosesChecked[1] && dosesChecked[2]), today: true },
+                  {
+                    day: 17,
+                    done: isCheckedIn || (dosesChecked[1] && dosesChecked[2]),
+                    today: true,
+                  },
                   { day: 18, done: false, today: false },
                   { day: 19, done: false, today: false },
                   { day: 20, done: false, today: false },
                 ].map((d) => (
-                  <div
-                    key={d.day}
-                    className={`koru-day-col ${d.today ? 'active-today' : ''}`}
-                  >
+                  <div key={d.day} className={`koru-day-col ${d.today ? 'active-today' : ''}`}>
                     <div className={`koru-check-slot ${d.done ? 'checked' : ''}`}>
                       {d.done ? <Check className="h-2.5 w-2.5 text-white" /> : null}
                     </div>
-                    <div className={`koru-day-circle ${d.today ? 'is-today' : ''} ${!d.done && !d.today ? 'is-future' : ''}`}>
+                    <div
+                      className={`koru-day-circle ${d.today ? 'is-today' : ''} ${!d.done && !d.today ? 'is-future' : ''}`}
+                    >
                       {d.day}
                     </div>
                   </div>
@@ -263,7 +275,11 @@ export function LandingPage() {
               <div className="koru-reminder-banner">
                 <div className="koru-reminder-text">
                   <h4>Never miss your medications.</h4>
-                  <p>{isCheckedIn ? 'Daily check-in recorded! Streak active.' : 'Smart scheduled reminders'}</p>
+                  <p>
+                    {isCheckedIn
+                      ? 'Daily check-in recorded! Streak active.'
+                      : 'Smart scheduled reminders'}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -316,7 +332,9 @@ export function LandingPage() {
                     onClick={() => setActiveTab('checkin')}
                   >
                     Check-in{' '}
-                    <span className={`koru-tab-count ${isCheckedIn ? 'bg-emerald-600 text-white' : 'red'}`}>
+                    <span
+                      className={`koru-tab-count ${isCheckedIn ? 'bg-emerald-600 text-white' : 'red'}`}
+                    >
                       {isCheckedIn ? '0' : '1'}
                     </span>
                   </button>
@@ -330,14 +348,20 @@ export function LandingPage() {
                         <Sparkles className="h-3.5 w-3.5 text-teal-600" />
                         Blood Sugar Optimization
                       </div>
-                      <p className="text-slate-600 m-0">Always take Metformin with meals to maintain consistent glucose regulation and avoid stomach discomfort.</p>
+                      <p className="text-slate-600 m-0">
+                        Always take Metformin with meals to maintain consistent glucose regulation
+                        and avoid stomach discomfort.
+                      </p>
                     </div>
                     <div className="p-3 bg-white rounded-xl border border-teal-100 text-xs">
                       <div className="flex items-center gap-2 font-bold text-teal-800 mb-1">
                         <Clock className="h-3.5 w-3.5 text-teal-600" />
                         Blood Pressure Timing
                       </div>
-                      <p className="text-slate-600 m-0">Take Lisinopril consistently at 8:00 AM each morning for optimal 24-hour cardiovascular protection.</p>
+                      <p className="text-slate-600 m-0">
+                        Take Lisinopril consistently at 8:00 AM each morning for optimal 24-hour
+                        cardiovascular protection.
+                      </p>
                     </div>
                   </div>
                 ) : activeTab === 'checkin' ? (
@@ -345,7 +369,11 @@ export function LandingPage() {
                     <div className="p-3.5 bg-white rounded-xl border border-teal-200 text-xs text-center space-y-2.5">
                       <div className="flex justify-center">
                         <div className="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-700">
-                          {isCheckedIn ? <CheckCircle2 className="h-6 w-6 text-emerald-600" /> : <Fingerprint className="h-6 w-6 text-teal-600" />}
+                          {isCheckedIn ? (
+                            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                          ) : (
+                            <Fingerprint className="h-6 w-6 text-teal-600" />
+                          )}
                         </div>
                       </div>
                       <div>
@@ -353,14 +381,18 @@ export function LandingPage() {
                           {isCheckedIn ? 'Check-in Completed!' : 'Daily Wellness Check-in'}
                         </h5>
                         <p className="text-[11px] text-slate-500 m-0 mt-0.5">
-                          {isCheckedIn ? 'Your adherence streak is 14 days and doses are up to date.' : 'Confirm you have taken today’s scheduled doses to keep your streak.'}
+                          {isCheckedIn
+                            ? 'Your adherence streak is 14 days and doses are up to date.'
+                            : 'Confirm you have taken today’s scheduled doses to keep your streak.'}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={handleCheckin}
                         className={`w-full py-2 rounded-lg font-bold text-xs transition cursor-pointer shadow-xs ${
-                          isCheckedIn ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-teal-700 text-white hover:bg-teal-800'
+                          isCheckedIn
+                            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            : 'bg-teal-700 text-white hover:bg-teal-800'
                         }`}
                       >
                         {isCheckedIn ? 'Reset Check-in' : 'Confirm Check-in Now'}
@@ -415,10 +447,7 @@ export function LandingPage() {
                     <span className="koru-gauge-percent">{gaugeValue}%</span>
                   </div>
                   <div className="koru-gauge-bar">
-                    <div
-                      className="koru-gauge-fill"
-                      style={{ width: `${gaugeValue}%` }}
-                    />
+                    <div className="koru-gauge-fill" style={{ width: `${gaugeValue}%` }} />
                   </div>
                   <div className="koru-gauge-footer">
                     <span>🟢 High Consistency</span>
@@ -437,7 +466,8 @@ export function LandingPage() {
           <span className="koru-section-pill">Clinical Capabilities</span>
           <h2 className="koru-section-title">Designed for Everyday Adherence</h2>
           <p className="koru-section-sub">
-            Built from clinical research to eliminate missed doses, predict refills, and keep family caregivers informed.
+            Built from clinical research to eliminate missed doses, predict refills, and keep family
+            caregivers informed.
           </p>
         </div>
 
@@ -448,7 +478,8 @@ export function LandingPage() {
             </div>
             <h3 className="koru-feature-card-title">Smart Dose Windows</h3>
             <p className="koru-feature-card-desc">
-              Organized into Morning, Afternoon, and Night windows with gentle snooze cycles and caregiver alerts on missed doses.
+              Organized into Morning, Afternoon, and Night windows with gentle snooze cycles and
+              caregiver alerts on missed doses.
             </p>
           </div>
 
@@ -458,7 +489,8 @@ export function LandingPage() {
             </div>
             <h3 className="koru-feature-card-title">AI Prescription OCR</h3>
             <p className="koru-feature-card-desc">
-              Snap a picture of your prescription label or paper script. Optical character recognition automatically extracts medicine names and dosages.
+              Snap a picture of your prescription label or paper script. Optical character
+              recognition automatically extracts medicine names and dosages.
             </p>
           </div>
 
@@ -468,7 +500,8 @@ export function LandingPage() {
             </div>
             <h3 className="koru-feature-card-title">AI Refill Predictor</h3>
             <p className="koru-feature-card-desc">
-              Computes daily consumption and predicts exact runout dates, alerting pharmacies and family 5 days before stock runs dry.
+              Computes daily consumption and predicts exact runout dates, alerting pharmacies and
+              family 5 days before stock runs dry.
             </p>
           </div>
 
@@ -478,7 +511,8 @@ export function LandingPage() {
             </div>
             <h3 className="koru-feature-card-title">Caregiver Coordination</h3>
             <p className="koru-feature-card-desc">
-              Dedicated views for family members and healthcare workers with live adherence status, message chat, and vital tracking.
+              Dedicated views for family members and healthcare workers with live adherence status,
+              message chat, and vital tracking.
             </p>
           </div>
         </div>
@@ -490,7 +524,8 @@ export function LandingPage() {
           <span className="koru-section-pill">Adherence Intelligence</span>
           <h2 className="koru-section-title">AI-Powered Adherence Analytics</h2>
           <p className="koru-section-sub">
-            Continuous compliance tracking, vital indicators, and streak reinforcement powered by clinical protocol modeling.
+            Continuous compliance tracking, vital indicators, and streak reinforcement powered by
+            clinical protocol modeling.
           </p>
         </div>
 
@@ -501,7 +536,8 @@ export function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Real-Time Adherence Scoring</h3>
             <p className="text-sm text-slate-600">
-              Continuously measures doses taken on schedule versus delayed or missed doses, calculating your true clinical consistency percentage.
+              Continuously measures doses taken on schedule versus delayed or missed doses,
+              calculating your true clinical consistency percentage.
             </p>
           </div>
 
@@ -511,7 +547,8 @@ export function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Habit Streak Reinforcement</h3>
             <p className="text-sm text-slate-600">
-              Visual daily habit circles and check-in milestones proven to improve long-term chronic treatment compliance by over 40%.
+              Visual daily habit circles and check-in milestones proven to improve long-term chronic
+              treatment compliance by over 40%.
             </p>
           </div>
 
@@ -521,17 +558,18 @@ export function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">One-Click Clinical Reports</h3>
             <p className="text-sm text-slate-600">
-              Export downloadable, HIPAA-compliant CSV reports detailing your 30-day compliance logs, ready to share with your physician.
+              Export downloadable, HIPAA-compliant CSV reports detailing your 30-day compliance
+              logs, ready to share with your physician.
             </p>
           </div>
         </div>
 
         <div className="flex justify-center">
           <Link
-            to={user ? "/adherence" : "/login"}
+            to={user ? '/adherence' : '/login'}
             className="koru-btn-dark inline-flex items-center gap-2"
           >
-            <span>{user ? "Open Adherence Analytics" : "Sign In to View Adherence"}</span>
+            <span>{user ? 'Open Adherence Analytics' : 'Sign In to View Adherence'}</span>
             <div className="koru-btn-circle-arrow">
               <ArrowRight className="h-3.5 w-3.5" />
             </div>
@@ -545,7 +583,8 @@ export function LandingPage() {
           <span className="koru-section-pill">Caregiver &amp; Clinical Portal</span>
           <h2 className="koru-section-title">Care Team Coordination</h2>
           <p className="koru-section-sub">
-            Keep family members, nurses, and clinicians connected with live dose updates, emergency missed-dose alerts, and triage queues.
+            Keep family members, nurses, and clinicians connected with live dose updates, emergency
+            missed-dose alerts, and triage queues.
           </p>
         </div>
 
@@ -556,7 +595,8 @@ export function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Monitored Cohort Roster</h3>
             <p className="text-sm text-slate-600">
-              Caregivers can monitor multiple family members or patients at once with live daily dose timelines and risk flags.
+              Caregivers can monitor multiple family members or patients at once with live daily
+              dose timelines and risk flags.
             </p>
           </div>
 
@@ -566,7 +606,8 @@ export function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Instant Dose Nudges</h3>
             <p className="text-sm text-slate-600">
-              If an intake window passes without confirmation, caregivers can dispatch gentle one-click SMS and in-app reminder nudges.
+              If an intake window passes without confirmation, caregivers can dispatch gentle
+              one-click SMS and in-app reminder nudges.
             </p>
           </div>
 
@@ -576,7 +617,8 @@ export function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-2">Two-Way Messaging</h3>
             <p className="text-sm text-slate-600">
-              Threaded clinical inquiries and symptom notes directly between patient and care provider, keeping everyone synchronized.
+              Threaded clinical inquiries and symptom notes directly between patient and care
+              provider, keeping everyone synchronized.
             </p>
           </div>
         </div>
@@ -585,14 +627,16 @@ export function LandingPage() {
           <Link
             to={
               user?.role === 'caregiver'
-                ? "/caregiver/portal"
+                ? '/caregiver/portal'
                 : user?.role === 'admin'
-                ? "/admin/portal"
-                : "/login?portal=caregiver"
+                  ? '/admin/portal'
+                  : '/login?portal=caregiver'
             }
             className="koru-btn-dark inline-flex items-center gap-2"
           >
-            <span>{user?.role === 'caregiver' ? "Open Caregiver Portal" : "Access Care Team Portal"}</span>
+            <span>
+              {user?.role === 'caregiver' ? 'Open Caregiver Portal' : 'Access Care Team Portal'}
+            </span>
             <div className="koru-btn-circle-arrow">
               <ArrowRight className="h-3.5 w-3.5" />
             </div>

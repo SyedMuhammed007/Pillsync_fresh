@@ -1,4 +1,3 @@
-import React from 'react';
 import logoWhiteUrl from '../../assets/pillsync-logo-white.png';
 import logoDarkIconUrl from '../../assets/pillsync-dark-icon.png';
 

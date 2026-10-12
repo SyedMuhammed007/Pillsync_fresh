@@ -22,7 +22,7 @@ def patient_and_medicine(db):
     user = User.objects.create_user(
         email="patient_refill@example.com",
         full_name="Patient Refill",
-        password="password123",
+        password="password123",  # pragma: allowlist secret
         role=UserRole.PATIENT,
     )
     patient = PatientProfile.objects.create(

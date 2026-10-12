@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/useAuth';
+import { authApi } from '../../../api/auth';
 import { Alert, PillSyncIcon } from '../../../components/common';
 import {
   Mail,
   Lock,
-  Pill,
   Sparkles,
   ArrowRight,
   CheckCircle2,
@@ -129,7 +129,9 @@ export function LoginPage() {
 
   const handleSocialLogin = async (provider) => {
     if (selectedRole === 'admin') {
-      setError('OAuth social login is disabled for the Admin Portal. Please sign in directly with your administrator credentials.');
+      setError(
+        'OAuth social login is disabled for the Admin Portal. Please sign in directly with your administrator credentials.'
+      );
       return;
     }
 
@@ -146,7 +148,9 @@ export function LoginPage() {
           password: oauthKey,
           role: selectedRole,
         });
-      } catch (e) {}
+      } catch {
+        // already registered or offline fallback
+      }
 
       await login(socialEmail, oauthKey, selectedRole);
       navigate(getDashboardPath(selectedRole));
@@ -217,7 +221,9 @@ export function LoginPage() {
           <div className="login-form-header">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 mb-2">
               {selectedRole === 'patient' && <User className="h-3.5 w-3.5 text-teal-600" />}
-              {selectedRole === 'caregiver' && <Stethoscope className="h-3.5 w-3.5 text-teal-600" />}
+              {selectedRole === 'caregiver' && (
+                <Stethoscope className="h-3.5 w-3.5 text-teal-600" />
+              )}
               {selectedRole === 'admin' && <Shield className="h-3.5 w-3.5 text-teal-600" />}
               <span className="capitalize">{selectedRole} Portal Access</span>
             </div>
@@ -248,7 +254,9 @@ export function LoginPage() {
                 <User className="h-4 w-4" />
                 <div>
                   <span className="block font-bold">Patient</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">Personal Care</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">
+                    Personal Care
+                  </span>
                 </div>
               </button>
               <button
@@ -259,7 +267,9 @@ export function LoginPage() {
                 <Stethoscope className="h-4 w-4" />
                 <div>
                   <span className="block font-bold">Caregiver</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">Clinical Team</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">
+                    Clinical Team
+                  </span>
                 </div>
               </button>
               <button
@@ -270,7 +280,9 @@ export function LoginPage() {
                 <Shield className="h-4 w-4" />
                 <div>
                   <span className="block font-bold">Admin</span>
-                  <span className="block text-[10px] text-slate-400 font-normal">System Portal</span>
+                  <span className="block text-[10px] text-slate-400 font-normal">
+                    System Portal
+                  </span>
                 </div>
               </button>
             </div>
@@ -289,8 +301,11 @@ export function LoginPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-amber-900 leading-relaxed">
-                    This account is registered as a <strong className="uppercase font-bold">{roleMismatch.actualRole}</strong>.
-                    You cannot sign in through the <span className="capitalize font-semibold">{roleMismatch.expectedRole}</span> portal tab.
+                    This account is registered as a{' '}
+                    <strong className="uppercase font-bold">{roleMismatch.actualRole}</strong>. You
+                    cannot sign in through the{' '}
+                    <span className="capitalize font-semibold">{roleMismatch.expectedRole}</span>{' '}
+                    portal tab.
                   </p>
                   <div className="mt-3 flex items-center gap-2">
                     <button
@@ -300,7 +315,12 @@ export function LoginPage() {
                       }}
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
                     >
-                      <span>Switch to {roleMismatch.actualRole.charAt(0).toUpperCase() + roleMismatch.actualRole.slice(1)} Portal</span>
+                      <span>
+                        Switch to{' '}
+                        {roleMismatch.actualRole.charAt(0).toUpperCase() +
+                          roleMismatch.actualRole.slice(1)}{' '}
+                        Portal
+                      </span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -387,7 +407,9 @@ export function LoginPage() {
           {selectedRole === 'admin' ? (
             <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">
               <Shield className="h-3.5 w-3.5 inline mr-1 text-teal-600" />
-              <span>Administrative Console: Authorized access only. Self-registration is disabled.</span>
+              <span>
+                Administrative Console: Authorized access only. Self-registration is disabled.
+              </span>
             </div>
           ) : (
             <>
@@ -403,10 +425,22 @@ export function LoginPage() {
                   title="Sign in with Google OAuth2"
                 >
                   <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
                   </svg>
                   <span>Google</span>
                 </button>
@@ -417,7 +451,7 @@ export function LoginPage() {
                   title="Sign in with Apple ID"
                 >
                   <svg className="h-4 w-4 shrink-0 fill-current text-slate-900" viewBox="0 0 24 24">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.08 1.73-.95 2.76 1.01.08 2.06-.51 2.68-1.26z"/>
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-2 .6-2.65 1.35-.58.66-1.08 1.73-.95 2.76 1.01.08 2.06-.51 2.68-1.26z" />
                   </svg>
                   <span>Apple ID</span>
                 </button>
@@ -425,7 +459,10 @@ export function LoginPage() {
 
               <div className="login-register-link-box">
                 <span>First time using this portal? </span>
-                <Link to={`/register?portal=${selectedRole}`} className="font-bold underline text-teal-700 hover:text-teal-900">
+                <Link
+                  to={`/register?portal=${selectedRole}`}
+                  className="font-bold underline text-teal-700 hover:text-teal-900"
+                >
                   Sign up here to create your credentials
                 </Link>
               </div>

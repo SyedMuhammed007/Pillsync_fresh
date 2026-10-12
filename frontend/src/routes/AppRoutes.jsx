@@ -10,21 +10,6 @@ function DashboardRedirect() {
   return <Navigate to="/patient/portal" replace />;
 }
 
-function RootRoute() {
-  const { user, isAuthenticated, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="h-10 w-10 rounded-full border-4 border-slate-200 border-t-teal-600 animate-spin" />
-      </div>
-    );
-  }
-  if (user && isAuthenticated) {
-    return <DashboardRedirect />;
-  }
-  return <Navigate to="/login" replace />;
-}
-
 // Auth & Landing pages
 import { LandingPage } from '../features/landing/pages/LandingPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';

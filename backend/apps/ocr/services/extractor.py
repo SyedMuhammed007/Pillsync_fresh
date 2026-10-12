@@ -1,13 +1,12 @@
 import logging
+import shutil
+import sys
 from pathlib import Path
 
 import pytesseract
 from PIL import Image, ImageEnhance, ImageOps
 
 logger = logging.getLogger(__name__)
-
-import shutil
-import sys
 
 # Dynamic Tesseract path discovery across Windows, Linux (Render/Docker), and macOS
 if sys.platform.startswith("win"):

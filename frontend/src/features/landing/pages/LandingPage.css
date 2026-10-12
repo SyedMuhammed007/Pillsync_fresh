@@ -8,7 +8,11 @@
   width: 100%;
   background: #f7faf9;
   color: #1a2421;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   overflow-x: hidden;
   position: relative;
 }
@@ -101,7 +105,9 @@
 }
 
 @media (min-width: 860px) {
-  .koru-nav-links { display: flex; }
+  .koru-nav-links {
+    display: flex;
+  }
 }
 
 .koru-nav-link {

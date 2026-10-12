@@ -12,9 +12,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "insecure-default-key-for-dev-and-test
 DEBUG = False
 
 ALLOWED_HOSTS = (
-    os.environ.get("ALLOWED_HOSTS", "*").split(",")
-    if os.environ.get("ALLOWED_HOSTS")
-    else ["*"]
+    os.environ.get("ALLOWED_HOSTS", "*").split(",") if os.environ.get("ALLOWED_HOSTS") else ["*"]
 )
 
 CSRF_TRUSTED_ORIGINS = [

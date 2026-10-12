@@ -7,7 +7,6 @@ import {
   XCircle,
   Sparkles,
   FileText,
-  AlertCircle,
   Pill,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -41,7 +40,10 @@ export function OCRPage() {
       const parsed = response.data || {};
       const raw = response.raw_text || '';
 
-      if (!parsed.is_medicine || (!parsed.medicine_name && (!parsed.medicines || parsed.medicines.length === 0))) {
+      if (
+        !parsed.is_medicine ||
+        (!parsed.medicine_name && (!parsed.medicines || parsed.medicines.length === 0))
+      ) {
         setError(
           parsed.error_detail ||
             'Non-Medication Image Rejected: No valid medicine package, bottle label, or clinical prescription text was detected. PillSync only processes legitimate medication images.'
@@ -49,16 +51,19 @@ export function OCRPage() {
         return;
       }
 
-      const medsList = Array.isArray(parsed.medicines) && parsed.medicines.length > 0
-        ? parsed.medicines
-        : [parsed];
+      const medsList =
+        Array.isArray(parsed.medicines) && parsed.medicines.length > 0
+          ? parsed.medicines
+          : [parsed];
 
       const entries = medsList.map((m, idx) => ({
         id: Date.now() + idx,
         name: m.medicine_name,
         strength: m.strength || 'As prescribed',
         quantity: m.quantity || 10,
-        dosage: m.dosage || (m.strength && m.strength !== 'As prescribed' ? `1 dose (${m.strength})` : '1 tablet'),
+        dosage:
+          m.dosage ||
+          (m.strength && m.strength !== 'As prescribed' ? `1 dose (${m.strength})` : '1 tablet'),
         frequency: m.frequency || 'As directed by physician',
         instructions: m.instructions || 'Take as directed with water',
         confidence: Math.round((m.confidence || parsed.confidence || 0.85) * 100),
@@ -154,15 +159,11 @@ export function OCRPage() {
   };
 
   const handleNameChange = (id, newName) => {
-    setResults((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, name: newName } : r))
-    );
+    setResults((prev) => prev.map((r) => (r.id === id ? { ...r, name: newName } : r)));
   };
 
   const handleStrengthChange = (id, newStrength) => {
-    setResults((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, strength: newStrength } : r))
-    );
+    setResults((prev) => prev.map((r) => (r.id === id ? { ...r, strength: newStrength } : r)));
   };
 
   return (
@@ -196,11 +197,14 @@ export function OCRPage() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-rose-800 uppercase tracking-wider text-[11px]">Medication Verification Failed</span>
+                <span className="font-bold text-rose-800 uppercase tracking-wider text-[11px]">
+                  Medication Verification Failed
+                </span>
               </div>
               <p className="mt-1 text-xs text-rose-700 leading-relaxed font-normal">{error}</p>
               <p className="mt-1 text-[11px] text-rose-500 font-normal">
-                Please upload a photo of an authentic medicine blister strip, syrup/drops bottle label, or official doctor prescription.
+                Please upload a photo of an authentic medicine blister strip, syrup/drops bottle
+                label, or official doctor prescription.
               </p>
             </div>
           </div>
@@ -226,11 +230,16 @@ export function OCRPage() {
                 <UploadCloud className="h-10 w-10 text-teal-600 mb-2" />
               )}
               <div className="upload-file-info">
-                <h3 className="upload-file-name" title={selectedFile ? selectedFile.name : 'Upload prescription or medicine image'}>
+                <h3
+                  className="upload-file-name"
+                  title={selectedFile ? selectedFile.name : 'Upload prescription or medicine image'}
+                >
                   {selectedFile ? selectedFile.name : 'Upload prescription or medicine image'}
                 </h3>
                 <p className="upload-file-hint">
-                  {selectedFile ? 'Ready for OCR processing' : 'Supports PNG, JPG, JPEG, or WEBP pill bottles & Rx slips'}
+                  {selectedFile
+                    ? 'Ready for OCR processing'
+                    : 'Supports PNG, JPG, JPEG, or WEBP pill bottles & Rx slips'}
                 </p>
                 <span className="upload-action-btn">
                   <ScanLine className="h-3 w-3" />
@@ -274,14 +283,20 @@ export function OCRPage() {
               {results.length === 0 ? (
                 <div className="py-16 text-center text-slate-400">
                   <ScanLine className="h-12 w-12 mx-auto text-slate-300 mb-2" />
-                  <p className="text-sm font-semibold text-slate-700">No prescriptions scanned yet</p>
+                  <p className="text-sm font-semibold text-slate-700">
+                    No prescriptions scanned yet
+                  </p>
                   <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-                    Upload a bottle label or doctor prescription on the left to extract medicine details.
+                    Upload a bottle label or doctor prescription on the left to extract medicine
+                    details.
                   </p>
                 </div>
               ) : (
                 results.map((item) => (
-                  <div key={item.id} className="ocr-result-card bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-3">
+                  <div
+                    key={item.id}
+                    className="ocr-result-card bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-3"
+                  >
                     <div className="result-main flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -302,7 +317,9 @@ export function OCRPage() {
                             className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded px-2 py-0.5 w-24"
                             title="Edit strength"
                           />
-                          <span className="text-xs text-slate-500 font-medium">· {item.frequency}</span>
+                          <span className="text-xs text-slate-500 font-medium">
+                            · {item.frequency}
+                          </span>
                           <span className="text-xs text-slate-500">· {item.instructions}</span>
                         </div>
                       </div>
@@ -313,7 +330,9 @@ export function OCRPage() {
 
                     {/* Raw Text Drawer Toggle */}
                     <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 gap-2">
-                      <span className="truncate max-w-[220px]" title={item.source}>Source: {item.source}</span>
+                      <span className="truncate max-w-[220px]" title={item.source}>
+                        Source: {item.source}
+                      </span>
                       <button
                         type="button"
                         onClick={() => setShowRawTextId(showRawTextId === item.id ? null : item.id)}

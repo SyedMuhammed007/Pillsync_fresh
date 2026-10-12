@@ -1,7 +1,12 @@
 import { apiClient, USE_MOCK_API } from './client';
-import { getScopedStorage, setScopedStorage, getCurrentUserKey, getCurrentUser } from '../utils/userStorage';
+import {
+  getScopedStorage,
+  setScopedStorage,
+  getCurrentUserKey,
+  getCurrentUser,
+} from '../utils/userStorage';
 
-const DEFAULT_PATIENT_MEDS = [
+export const DEFAULT_PATIENT_MEDS = [
   {
     id: 'med-reg-1',
     name: 'Metformin HCl',

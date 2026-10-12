@@ -20,7 +20,10 @@ export function getCurrentUserKey() {
   const user = getCurrentUser();
   if (user) {
     if (user.email) {
-      return user.email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+      return user.email
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '_');
     }
     if (user.id) {
       return String(user.id);
@@ -69,7 +72,10 @@ export function removeScopedStorage(namespace) {
 export function getScopedStorageForUser(userIdentifier, namespace, defaultValue = []) {
   try {
     if (!userIdentifier) return defaultValue;
-    const cleanKey = String(userIdentifier).trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const cleanKey = String(userIdentifier)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_');
     const key = `${namespace}_${cleanKey}`;
     const raw = localStorage.getItem(key);
     if (raw !== null) {

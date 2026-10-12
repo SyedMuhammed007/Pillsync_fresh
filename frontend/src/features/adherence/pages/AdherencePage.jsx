@@ -67,9 +67,13 @@ export function AdherencePage() {
             if (Array.isArray(res.data) && res.data.length > 0) {
               try {
                 localStorage.setItem('pillsync_registered_users', JSON.stringify(res.data));
-              } catch {}
+              } catch {
+                // ignore storage error
+              }
             }
-          } catch {}
+          } catch {
+            // ignore network error
+          }
 
           const currentCohort = getCohortPatients(user);
           if (currentCohort.length === 0) {
@@ -181,7 +185,7 @@ export function AdherencePage() {
     return () => {
       isMounted = false;
     };
-  }, [user?.id, user?.email, isCaregiver]);
+  }, [user, isCaregiver]);
 
   if (loading) {
     return (
@@ -238,7 +242,9 @@ export function AdherencePage() {
           <div>
             <div className="adherence-title-row">
               <h1 className="adherence-title">
-                {isCaregiver ? 'Cohort Adherence & Clinical Analytics' : 'Adherence & Health Analytics'}
+                {isCaregiver
+                  ? 'Cohort Adherence & Clinical Analytics'
+                  : 'Adherence & Health Analytics'}
               </h1>
               <Badge variant="success" size="sm">
                 <ShieldCheck className="h-3.5 w-3.5" />
@@ -276,9 +282,12 @@ export function AdherencePage() {
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xs font-bold text-slate-800">No Patients In Your Care Cohort Yet</h3>
+                <h3 className="text-xs font-bold text-slate-800">
+                  No Patients In Your Care Cohort Yet
+                </h3>
                 <p className="text-[11px] text-slate-500">
-                  Assign patients from the Patients Portal to monitor real-time adherence telemetry, dose streaks, and vital improvements.
+                  Assign patients from the Patients Portal to monitor real-time adherence telemetry,
+                  dose streaks, and vital improvements.
                 </p>
               </div>
             </div>
@@ -300,7 +309,8 @@ export function AdherencePage() {
               <div>
                 <h3 className="text-xs font-bold text-slate-800">No Prescriptions Logged Yet</h3>
                 <p className="text-[11px] text-slate-500">
-                  Scan or add your daily medications to begin tracking clinical adherence, streaks, and health vitals.
+                  Scan or add your daily medications to begin tracking clinical adherence, streaks,
+                  and health vitals.
                 </p>
               </div>
             </div>
@@ -364,7 +374,9 @@ export function AdherencePage() {
             </div>
             <div className="adherence-kpi-meta text-amber-600">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
-              <span>{summary.streak > 0 ? 'Consecutive on-time intake' : 'Start your streak today'}</span>
+              <span>
+                {summary.streak > 0 ? 'Consecutive on-time intake' : 'Start your streak today'}
+              </span>
             </div>
           </div>
 
@@ -427,7 +439,8 @@ export function AdherencePage() {
                 <HeartPulse className="h-8 w-8 text-slate-300 mb-2" />
                 <p className="text-sm font-bold text-slate-700">No Biomarker Logs Recorded Yet</p>
                 <p className="text-xs text-slate-400 max-w-sm mt-1">
-                  Once daily doses and vital signs are logged, correlation trends between medication adherence and health metrics will graph automatically.
+                  Once daily doses and vital signs are logged, correlation trends between medication
+                  adherence and health metrics will graph automatically.
                 </p>
               </div>
             ) : (
@@ -436,99 +449,102 @@ export function AdherencePage() {
                   data={healthData}
                   margin={{ top: 15, right: 20, left: -15, bottom: 0 }}
                 >
-                <defs>
-                  <linearGradient id="adherenceGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis
-                  dataKey="day"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#475569', fontSize: 12, fontWeight: 700 }}
-                />
-                <YAxis
-                  yAxisId="left"
-                  domain={[60, 160]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 11 }}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[0, 100]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 11 }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: '1rem',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
-                    backgroundColor: '#ffffff',
-                    fontSize: '12px',
-                  }}
-                  formatter={(val, name) => {
-                    if (name === 'Adherence %') return [val + '%', name];
-                    if (name === 'Systolic BP') return [val + ' mmHg', name];
-                    if (name === 'Blood Glucose') return [val + ' mg/dL', name];
-                    if (name === 'Health Vitality') return [val + ' / 100', name];
-                    return [val, name];
-                  }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} />
-
-                <Area
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="adherence"
-                  name="Adherence %"
-                  stroke="#4f46e5"
-                  strokeWidth={2}
-                  fill="url(#adherenceGradient)"
-                />
-
-                {(selectedMetric === 'all' || selectedMetric === 'bp') && (
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="systolicBP"
-                    name="Systolic BP"
-                    stroke="#ef4444"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#ef4444' }}
+                  <defs>
+                    <linearGradient id="adherenceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#475569', fontSize: 12, fontWeight: 700 }}
                   />
-                )}
-
-                {(selectedMetric === 'all' || selectedMetric === 'sugar') && (
-                  <Line
+                  <YAxis
                     yAxisId="left"
-                    type="monotone"
-                    dataKey="bloodSugar"
-                    name="Blood Glucose"
-                    stroke="#f59e0b"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#f59e0b' }}
+                    domain={[60, 160]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
                   />
-                )}
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    domain={[0, 100]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: '1rem',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                      backgroundColor: '#ffffff',
+                      fontSize: '12px',
+                    }}
+                    formatter={(val, name) => {
+                      if (name === 'Adherence %') return [val + '%', name];
+                      if (name === 'Systolic BP') return [val + ' mmHg', name];
+                      if (name === 'Blood Glucose') return [val + ' mg/dL', name];
+                      if (name === 'Health Vitality') return [val + ' / 100', name];
+                      return [val, name];
+                    }}
+                  />
+                  <Legend
+                    iconType="circle"
+                    wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }}
+                  />
 
-                {(selectedMetric === 'all' || selectedMetric === 'vitality') && (
-                  <Line
+                  <Area
                     yAxisId="right"
                     type="monotone"
-                    dataKey="healthScore"
-                    name="Health Vitality"
-                    stroke="#10b981"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#10b981' }}
+                    dataKey="adherence"
+                    name="Adherence %"
+                    stroke="#4f46e5"
+                    strokeWidth={2}
+                    fill="url(#adherenceGradient)"
                   />
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
+
+                  {(selectedMetric === 'all' || selectedMetric === 'bp') && (
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="systolicBP"
+                      name="Systolic BP"
+                      stroke="#ef4444"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#ef4444' }}
+                    />
+                  )}
+
+                  {(selectedMetric === 'all' || selectedMetric === 'sugar') && (
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="bloodSugar"
+                      name="Blood Glucose"
+                      stroke="#f59e0b"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#f59e0b' }}
+                    />
+                  )}
+
+                  {(selectedMetric === 'all' || selectedMetric === 'vitality') && (
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="healthScore"
+                      name="Health Vitality"
+                      stroke="#10b981"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#10b981' }}
+                    />
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
             )}
           </div>
 
@@ -674,11 +690,14 @@ export function AdherencePage() {
             </div>
             {medicationHistory.length > 0 ? (
               <p className="text-xs text-slate-700 leading-relaxed mb-2">
-                "Active intake monitored for your prescribed regimens ({medicationHistory.map((m) => m.medicationName).join(', ')}). Continue following your scheduled morning and evening dose timings."
+                "Active intake monitored for your prescribed regimens (
+                {medicationHistory.map((m) => m.medicationName).join(', ')}). Continue following
+                your scheduled morning and evening dose timings."
               </p>
             ) : (
               <p className="text-xs text-slate-700 leading-relaxed mb-2">
-                "No prescriptions active yet. Once you add your medications, clinical adherence insights and physician feedback will be automatically generated here."
+                "No prescriptions active yet. Once you add your medications, clinical adherence
+                insights and physician feedback will be automatically generated here."
               </p>
             )}
             <div className="flex items-center gap-4 text-[11px] text-slate-500">
@@ -717,51 +736,52 @@ export function AdherencePage() {
                     </td>
                   </tr>
                 ) : (
-                medicationHistory.map((med) => (
-                  <tr key={med.id}>
-                    <td>
-                      <div>
-                        <p className="font-bold text-slate-900 m-0">{med.medicationName}</p>
-                        <span className="text-[10px] text-indigo-600 font-semibold">
-                          {med.category || 'General Care'}
-                        </span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
-                          {med.taken} taken
-                        </span>
-                        {med.missed > 0 ? (
-                          <span className="rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-700">
-                            {med.missed} missed
+                  medicationHistory.map((med) => (
+                    <tr key={med.id}>
+                      <td>
+                        <div>
+                          <p className="font-bold text-slate-900 m-0">{med.medicationName}</p>
+                          <span className="text-[10px] text-indigo-600 font-semibold">
+                            {med.category || 'General Care'}
                           </span>
-                        ) : (
-                          <span className="rounded-md bg-slate-50 px-2 py-0.5 text-xs font-bold text-slate-500">
-                            0 missed
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-24 rounded-full bg-slate-100 h-2 overflow-hidden">
-                          <div
-                            className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                            style={{ width: med.adherence + '%' }}
-                          />
                         </div>
-                        <span className="text-xs font-bold text-slate-900">{med.adherence}%</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="text-xs font-medium text-slate-600">
-                        {med.impact ||
-                          'Regimen maintained according to prescribed clinical instructions.'}
-                      </span>
-                    </td>
-                  </tr>
-                )))}
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                            {med.taken} taken
+                          </span>
+                          {med.missed > 0 ? (
+                            <span className="rounded-md bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-700">
+                              {med.missed} missed
+                            </span>
+                          ) : (
+                            <span className="rounded-md bg-slate-50 px-2 py-0.5 text-xs font-bold text-slate-500">
+                              0 missed
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-24 rounded-full bg-slate-100 h-2 overflow-hidden">
+                            <div
+                              className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                              style={{ width: med.adherence + '%' }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-slate-900">{med.adherence}%</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="text-xs font-medium text-slate-600">
+                          {med.impact ||
+                            'Regimen maintained according to prescribed clinical instructions.'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

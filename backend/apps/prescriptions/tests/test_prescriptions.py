@@ -19,7 +19,7 @@ def patient_profile(db):
     user = User.objects.create_user(
         email="patient_rx@example.com",
         full_name="Patient Rx",
-        password="password123",
+        password="password123",  # pragma: allowlist secret
         role=UserRole.PATIENT,
     )
     return PatientProfile.objects.create(

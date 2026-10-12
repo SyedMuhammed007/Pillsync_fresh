@@ -14,7 +14,15 @@ import {
   PieChart,
   Pie,
 } from 'recharts';
-import { TrendingUp, Users, Activity, ShieldCheck, Download, CheckCircle2, Printer } from 'lucide-react';
+import {
+  TrendingUp,
+  Users,
+  Activity,
+  ShieldCheck,
+  Download,
+  CheckCircle2,
+  Printer,
+} from 'lucide-react';
 import './AnalyticsPage.css';
 
 function getStoredUsers() {
@@ -35,7 +43,10 @@ function getStoredMedications() {
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('pillsync_patient_medications') || key.startsWith('pillsync_medications_'))) {
+      if (
+        key &&
+        (key.startsWith('pillsync_patient_medications') || key.startsWith('pillsync_medications_'))
+      ) {
         const raw = localStorage.getItem(key);
         if (raw) {
           const parsed = JSON.parse(raw);
@@ -230,7 +241,9 @@ export function AnalyticsPage() {
             </div>
             <p className="analytics-kpi-subtext text-emerald-600">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {totalPatientsCount > 0 ? `${totalPatientsCount} registered patient accounts` : 'Zero registered accounts'}
+              {totalPatientsCount > 0
+                ? `${totalPatientsCount} registered patient accounts`
+                : 'Zero registered accounts'}
             </p>
           </div>
 
@@ -262,7 +275,9 @@ export function AnalyticsPage() {
             </div>
             <p className="analytics-kpi-subtext text-slate-500">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400" />
-              {activePrescriptionsCount > 0 ? `${activePrescriptionsCount} regimens in active protocol` : 'No active prescriptions'}
+              {activePrescriptionsCount > 0
+                ? `${activePrescriptionsCount} regimens in active protocol`
+                : 'No active prescriptions'}
             </p>
           </div>
 
@@ -394,9 +409,12 @@ export function AnalyticsPage() {
         <div className="audit-table-card">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Security &amp; Clinical Audit Trail</h3>
+              <h3 className="text-sm font-bold text-slate-900">
+                Security &amp; Clinical Audit Trail
+              </h3>
               <p className="text-xs text-slate-400">
-                Immutable chronological log of platform microservices, database, and verified user events
+                Immutable chronological log of platform microservices, database, and verified user
+                events
               </p>
             </div>
             <Badge variant="gray" size="xs">

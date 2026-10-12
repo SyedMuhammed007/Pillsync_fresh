@@ -23,7 +23,10 @@ function fallbackParseFromFilename(fileName) {
     { name: 'Atenolol', match: /atenolol/i },
     { name: 'Pantoprazole', match: /pantoprazole/i },
     { name: 'Omeprazole', match: /omeprazole/i },
-    { name: 'Flupentixol & Melitracen Tablets (Somasure)', match: /flupentixol|melitracen|somasure|placida|deanxit/i },
+    {
+      name: 'Flupentixol & Melitracen Tablets (Somasure)',
+      match: /flupentixol|melitracen|somasure|placida|deanxit/i,
+    },
     { name: 'TRUEplus Glucose Tablets', match: /trueplus|glucose/i },
     { name: 'Belladonna & Amphojel', match: /belladonna|amphojel/i },
   ];
@@ -115,7 +118,9 @@ export const ocrApi = {
             timeout: 10000,
           })
           .catch(() => {});
-      } catch {}
+      } catch {
+        // ignore background OCR sync error
+      }
 
       return {
         raw_text: clientRawText,

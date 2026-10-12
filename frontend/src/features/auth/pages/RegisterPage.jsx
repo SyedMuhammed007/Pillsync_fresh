@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/useAuth';
 import { Alert, PillSyncIcon } from '../../../components/common';
-import { Mail, Lock, User, ShieldCheck, Pill, ArrowRight, Stethoscope, Shield } from 'lucide-react';
+import { Mail, Lock, User, ShieldCheck, ArrowRight, Stethoscope, Shield } from 'lucide-react';
 import { isValidEmail } from '../../../utils/validation';
 import './RegisterPage.css';
 
@@ -99,9 +99,14 @@ export function RegisterPage() {
           <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-amber-600 shrink-0" />
-              <span>Admin Portal has <strong>Sign In only</strong>. Self-registration is restricted.</span>
+              <span>
+                Admin Portal has <strong>Sign In only</strong>. Self-registration is restricted.
+              </span>
             </div>
-            <Link to="/login?portal=admin" className="font-bold underline text-amber-800 hover:text-amber-950">
+            <Link
+              to="/login?portal=admin"
+              className="font-bold underline text-amber-800 hover:text-amber-950"
+            >
               Sign In as Admin
             </Link>
           </div>
@@ -115,7 +120,10 @@ export function RegisterPage() {
           {/* Role Selection */}
           <div className="register-role-section">
             <span className="register-role-label">Choose Account Type</span>
-            <div className="register-role-grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+            <div
+              className="register-role-grid"
+              style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}
+            >
               <button
                 type="button"
                 onClick={() => setSelectedRole('patient')}
@@ -142,7 +150,10 @@ export function RegisterPage() {
                 <Shield className="h-4 w-4 text-teal-600 shrink-0" />
                 <span>Admin portal is restricted to Sign In only.</span>
               </div>
-              <Link to="/login?portal=admin" className="font-semibold text-teal-700 underline hover:text-teal-900">
+              <Link
+                to="/login?portal=admin"
+                className="font-semibold text-teal-700 underline hover:text-teal-900"
+              >
                 Admin Sign In &rarr;
               </Link>
             </div>

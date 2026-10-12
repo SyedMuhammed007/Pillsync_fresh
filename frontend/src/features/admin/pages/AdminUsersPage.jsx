@@ -49,7 +49,6 @@ export function AdminUsersPage() {
 
   // Fetch real database users on mount
   const fetchBackendUsers = async () => {
-    setIsLoading(true);
     try {
       const res = await apiClient.get('/auth/users/');
       if (Array.isArray(res.data) && res.data.length > 0) {
@@ -85,7 +84,8 @@ export function AdminUsersPage() {
           currentPatients = currentPatients.filter((p) => !isDemoEmail(p.email));
 
           const serverPatients = backendUsers.filter(
-            (u) => (u.role || '').toLowerCase() === 'patient' && u.assignedCaregiver !== 'Unassigned'
+            (u) =>
+              (u.role || '').toLowerCase() === 'patient' && u.assignedCaregiver !== 'Unassigned'
           );
 
           let updatedPatients = [...currentPatients];
@@ -169,9 +169,7 @@ export function AdminUsersPage() {
   const handleToggleStatus = async (userId) => {
     const target = users.find((u) => u.id === userId);
     const newStatus = target?.status === 'Active' ? 'Suspended' : 'Active';
-    const updated = users.map((u) =>
-      u.id === userId ? { ...u, status: newStatus } : u
-    );
+    const updated = users.map((u) => (u.id === userId ? { ...u, status: newStatus } : u));
     saveUsersList(updated);
 
     try {
@@ -252,8 +250,7 @@ export function AdminUsersPage() {
 
     const emailTrim = newUser.email.trim().toLowerCase();
     const nameTrim = newUser.name.trim();
-    const assignedCaregiver =
-      newUser.role === 'patient' ? 'souju' : 'System Admin';
+    const assignedCaregiver = newUser.role === 'patient' ? 'souju' : 'System Admin';
 
     let created = {
       id: `u-${Date.now()}`,
@@ -344,7 +341,8 @@ export function AdminUsersPage() {
               )}
             </div>
             <p className="admin-users-subtitle">
-              Central identity registry: Monitor all users registered via public portals, assign caregivers, and manage roles
+              Central identity registry: Monitor all users registered via public portals, assign
+              caregivers, and manage roles
             </p>
           </div>
 
@@ -544,7 +542,9 @@ export function AdminUsersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Email Address *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Email Address *
+                  </label>
                   <input
                     type="email"
                     required
@@ -556,7 +556,9 @@ export function AdminUsersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Access Role *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Access Role *
+                  </label>
                   <select
                     value={newUser.role}
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
