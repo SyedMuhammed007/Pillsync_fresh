@@ -49,9 +49,16 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
   }
 
   const currentRole = (user?.role || '').toLowerCase();
-  const isAllowed =
+  const currentEmail = (user?.email || '').trim().toLowerCase();
+
+  let isAllowed =
     allowedRoles.length === 0 ||
     allowedRoles.some((r) => r.toLowerCase() === currentRole);
+
+  // Strict Admin Isolation: Only the designated admin email can access admin-only routes
+  if (allowedRoles.map((r) => r.toLowerCase()).includes('admin') && currentEmail !== 'syedmuhammedsr@gmail.com') {
+    isAllowed = false;
+  }
 
   if (!isAllowed) {
     return (
@@ -64,8 +71,7 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
           <span className="access-denied-code">Error 403 · Access Restricted</span>
           <h2 className="access-denied-title">Clinical Role Authorization Required</h2>
           <p className="access-denied-message">
-            This portal view is strictly restricted to clinical roles with designated HIPAA
-            privileges.
+            This portal view is strictly restricted to designated administrative personnel.
           </p>
 
           <div className="access-denied-roles-box">
@@ -91,27 +97,6 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
               <ArrowLeft className="h-4 w-4" />
               Return to Dashboard
             </Link>
-            {allowedRoles.includes('admin') && (
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    const stored = localStorage.getItem('user');
-                    if (stored) {
-                      const u = JSON.parse(stored);
-                      u.role = 'admin';
-                      localStorage.setItem('user', JSON.stringify(u));
-                    }
-                    window.location.href = '/admin/portal';
-                  } catch (e) {
-                    window.location.href = '/login?portal=admin';
-                  }
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 text-white px-5 py-2.5 text-xs font-bold hover:bg-teal-700 transition cursor-pointer shadow-sm"
-              >
-                <span>Switch to Admin Console</span>
-              </button>
-            )}
           </div>
         </div>
       </div>

@@ -153,10 +153,14 @@ export function AuthProvider({ children }) {
           avatar: null,
         };
       } else if (role === 'admin') {
+        if ((user?.email || '').toLowerCase() !== 'syedmuhammedsr@gmail.com') {
+          console.warn('Unauthorized attempt to elevate to admin role');
+          return;
+        }
         updatedUser = {
-          id: 'u-admin-1',
-          email: 'admin@example.com',
-          name: 'Platform Administrator',
+          id: 5,
+          email: 'syedmuhammedsr@gmail.com',
+          name: 'Syed Muhammed',
           role: 'admin',
           avatar: null,
         };

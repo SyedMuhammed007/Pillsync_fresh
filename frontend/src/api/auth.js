@@ -229,11 +229,18 @@ const mockAuthApi = {
 
     let userRole = (user.role || 'patient').toLowerCase();
 
-    // If user is logging into Admin portal, grant admin role
-    if (role && role.toLowerCase() === 'admin' && userRole !== 'admin') {
-      userRole = 'admin';
-      user.role = 'admin';
-      saveUser(user);
+    // Strict Admin Protection: Only syedmuhammedsr@gmail.com can sign in to Admin portal
+    if (role && role.toLowerCase() === 'admin') {
+      if (normalizedEmail !== 'syedmuhammedsr@gmail.com' || userRole !== 'admin') {
+        const err = new Error(
+          'Access Denied: Only the designated Platform Administrator (syedmuhammedsr@gmail.com) can sign in to the Admin Portal.'
+        );
+        err.roleMismatch = {
+          expectedRole: 'admin',
+          actualRole: userRole,
+        };
+        throw err;
+      }
     } else if (role && userRole !== role.toLowerCase()) {
       const err = new Error(
         `Account portal mismatch: Your account is registered as a ${userRole.toUpperCase()}. Please select the ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} portal tab to sign in.`
@@ -406,13 +413,21 @@ const realAuthApi = {
       });
       const data = res.data;
       const decoded = decodeJWT(data.access_token) || {};
-      let userRole = (decoded.role || role || 'patient').toLowerCase();
-      if (role && role.toLowerCase() === 'admin') {
-        userRole = 'admin';
-      }
+      let userRole = (decoded.role || 'patient').toLowerCase();
 
-      // Check role against active portal tab
-      if (role && role.toLowerCase() !== 'admin' && userRole !== role.toLowerCase()) {
+      // Strict Admin Protection: Only syedmuhammedsr@gmail.com can sign in to Admin portal
+      if (role && role.toLowerCase() === 'admin') {
+        if (normalizedEmail !== 'syedmuhammedsr@gmail.com' || userRole !== 'admin') {
+          const err = new Error(
+            'Access Denied: Only the designated Platform Administrator (syedmuhammedsr@gmail.com) can sign in to the Admin Portal.'
+          );
+          err.roleMismatch = {
+            expectedRole: 'admin',
+            actualRole: userRole,
+          };
+          throw err;
+        }
+      } else if (role && userRole !== role.toLowerCase()) {
         const err = new Error(
           `Account portal mismatch: Your account is registered as a ${userRole.toUpperCase()}. Please select the ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} portal tab to sign in.`
         );

@@ -69,13 +69,31 @@ export function LoginPage() {
       return;
     }
 
+    const trimmedEmail = formData.email.trim().toLowerCase();
+
+    // Strict Admin Portal Protection: Only syedmuhammedsr@gmail.com can sign in to the Admin Portal
+    if (selectedRole === 'admin' && trimmedEmail !== 'syedmuhammedsr@gmail.com') {
+      setError(
+        'Access Denied: Only the designated Platform Administrator (syedmuhammedsr@gmail.com) can sign in to the Admin Portal. Please switch to the Patient or Caregiver tab.'
+      );
+      return;
+    }
+
     setIsAuthenticating(true);
     try {
-      const result = await login(formData.email.trim(), formData.password, selectedRole);
+      const result = await login(trimmedEmail, formData.password, selectedRole);
       const userRole = (result?.user?.role || selectedRole || 'patient').toLowerCase();
+      const userEmail = (result?.user?.email || trimmedEmail).toLowerCase();
 
-      // Guard: strictly ensure user cannot inadvertently enter incorrect role portal
-      if (selectedRole !== 'admin' && userRole !== selectedRole.toLowerCase()) {
+      // Guard: strictly ensure no other account can enter Admin portal
+      if (selectedRole === 'admin') {
+        if (userRole !== 'admin' || userEmail !== 'syedmuhammedsr@gmail.com') {
+          setError(
+            'Access Denied: Only the designated Platform Administrator (syedmuhammedsr@gmail.com) can sign in to the Admin Portal.'
+          );
+          return;
+        }
+      } else if (userRole !== selectedRole.toLowerCase()) {
         setRoleMismatch({
           expectedRole: selectedRole,
           actualRole: userRole,
@@ -110,6 +128,11 @@ export function LoginPage() {
   };
 
   const handleSocialLogin = async (provider) => {
+    if (selectedRole === 'admin') {
+      setError('OAuth social login is disabled for the Admin Portal. Please sign in directly with your administrator credentials.');
+      return;
+    }
+
     setIsAuthenticating(true);
     setError(null);
     try {

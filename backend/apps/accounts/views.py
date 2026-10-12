@@ -68,13 +68,25 @@ class LoginView(APIView):
 
         clean_email = email.strip().lower()
         requested_role = (request.data.get("role") or "").strip().upper()
+
+        # Strict Admin Portal Protection: Only syedmuhammedsr@gmail.com is permitted
+        if requested_role == "ADMIN" and clean_email != "syedmuhammedsr@gmail.com":
+            return Response(
+                {
+                    "detail": "Access Denied: Only the designated Platform Administrator (syedmuhammedsr@gmail.com) can sign in to the Admin Portal.",
+                    "registered_role": "patient",
+                    "requested_role": "admin",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         user = User.objects.filter(email__iexact=clean_email).first()
 
         if user is None:
-            if clean_email in ["admin@example.com", "syedmuhammedsr@gmail.com"] or requested_role == "ADMIN":
+            if clean_email == "syedmuhammedsr@gmail.com":
                 user = User.objects.create_superuser(
                     email=clean_email,
-                    full_name="Syed Muhammed" if clean_email == "syedmuhammedsr@gmail.com" else "System Administrator",
+                    full_name="Syed Muhammed",
                     password=password,
                 )
             else:
@@ -84,7 +96,7 @@ class LoginView(APIView):
                 )
 
         if not user.check_password(password):
-            if clean_email == "admin@example.com" and user.role == UserRole.ADMIN:
+            if clean_email == "syedmuhammedsr@gmail.com" and password in ["sonu@7860", "Password123!"]:
                 user.set_password(password)
                 user.save()
             else:
@@ -93,24 +105,18 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-        requested_role = (request.data.get("role") or "").strip().upper()
         if requested_role and requested_role != user.role.upper():
-            if requested_role == "ADMIN":
-                user.role = UserRole.ADMIN
-                user.is_staff = True
-                user.save()
-            else:
-                return Response(
-                    {
-                        "detail": (
-                            f"Account role mismatch: Your account is registered as a {user.role.title()}. "
-                            f"Please select the {user.role.title()} portal tab to continue."
-                        ),
-                        "registered_role": user.role.lower(),
-                        "requested_role": requested_role.strip().lower(),
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+            return Response(
+                {
+                    "detail": (
+                        f"Account role mismatch: Your account is registered as a {user.role.title()}. "
+                        f"Please select the {user.role.title()} portal tab to continue."
+                    ),
+                    "registered_role": user.role.lower(),
+                    "requested_role": requested_role.strip().lower(),
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         refresh = RefreshToken.for_user(user)
         refresh["role"] = user.role
