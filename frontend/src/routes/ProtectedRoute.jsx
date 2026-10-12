@@ -54,11 +54,16 @@ export function RoleBasedRoute({ children, allowedRoles = [] }) {
   let isAllowed =
     allowedRoles.length === 0 || allowedRoles.some((r) => r.toLowerCase() === currentRole);
 
-  // Strict Admin Isolation: Only the designated admin email can access admin-only routes
-  if (
-    allowedRoles.map((r) => r.toLowerCase()).includes('admin') &&
-    currentEmail !== 'syedmuhammedsr@gmail.com'
-  ) {
+  // Strict Admin Isolation: Only designated admin email can access admin-only routes
+  const isOnlyAdminAllowed =
+    allowedRoles.length > 0 && allowedRoles.every((r) => r.toLowerCase() === 'admin');
+
+  if (isOnlyAdminAllowed && currentEmail !== 'syedmuhammedsr@gmail.com') {
+    isAllowed = false;
+  }
+
+  // Also prevent any non-admin email from masquerading as admin
+  if (currentRole === 'admin' && currentEmail !== 'syedmuhammedsr@gmail.com') {
     isAllowed = false;
   }
 
