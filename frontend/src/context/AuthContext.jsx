@@ -56,15 +56,17 @@ export function AuthProvider({ children }) {
             ? localUsers.filter((u) => !isDemoEmail(u.email))
             : [];
           const cleanServer = res.data.filter((u) => !isDemoEmail(u.email));
-          const merged = [...cleanServer];
-          for (const localU of cleanLocal) {
-            const exists = merged.some(
-              (u) => u.email && localU.email && u.email.toLowerCase() === localU.email.toLowerCase()
-            );
-            if (!exists) {
-              merged.push(localU);
-            }
-          }
+          const mergedMap = new Map();
+          WORKING_ACCOUNTS.forEach((wa) => mergedMap.set(wa.email.toLowerCase(), wa));
+          cleanLocal.forEach((u) => {
+            const key = u.email.toLowerCase();
+            mergedMap.set(key, { ...mergedMap.get(key), ...u });
+          });
+          cleanServer.forEach((u) => {
+            const key = u.email.toLowerCase();
+            mergedMap.set(key, { ...mergedMap.get(key), ...u });
+          });
+          const merged = Array.from(mergedMap.values());
           localStorage.setItem('pillsync_registered_users', JSON.stringify(merged));
         }
       } catch (e) {

@@ -35,19 +35,25 @@ import { isDemoEmail, WORKING_ACCOUNTS } from '../api/auth';
 import './DashboardPage.css';
 
 function getAdminRegisteredUsers() {
+  const mergedMap = new Map();
+  WORKING_ACCOUNTS.forEach((wa) => mergedMap.set(wa.email.toLowerCase(), wa));
   try {
     const raw = localStorage.getItem('pillsync_registered_users');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const clean = parsed.filter((u) => !isDemoEmail(u.email));
-        if (clean.length > 0) return clean;
+        parsed
+          .filter((u) => !isDemoEmail(u.email))
+          .forEach((u) => {
+            const key = u.email.toLowerCase();
+            mergedMap.set(key, { ...mergedMap.get(key), ...u });
+          });
       }
     }
   } catch (err) {
     console.error(err);
   }
-  return [...WORKING_ACCOUNTS];
+  return Array.from(mergedMap.values());
 }
 
 function getAdminPlatformTelemetry(userCount) {
@@ -102,9 +108,16 @@ export function DashboardPage() {
         .then((res) => {
           if (Array.isArray(res.data) && res.data.length > 0) {
             const cleanUsers = res.data.filter((u) => !isDemoEmail(u.email));
-            setAdminUsers(cleanUsers);
+            const mergedMap = new Map();
+            WORKING_ACCOUNTS.forEach((wa) => mergedMap.set(wa.email.toLowerCase(), wa));
+            cleanUsers.forEach((cu) => {
+              const key = cu.email.toLowerCase();
+              mergedMap.set(key, { ...mergedMap.get(key), ...cu });
+            });
+            const finalUsers = Array.from(mergedMap.values());
+            setAdminUsers(finalUsers);
             try {
-              localStorage.setItem('pillsync_registered_users', JSON.stringify(cleanUsers));
+              localStorage.setItem('pillsync_registered_users', JSON.stringify(finalUsers));
             } catch {}
           }
         })

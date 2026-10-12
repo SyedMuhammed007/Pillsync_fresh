@@ -15,22 +15,25 @@ export function AdminUsersPage() {
   const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState(() => {
-    let list = [];
+    const mergedMap = new Map();
+    WORKING_ACCOUNTS.forEach((wa) => mergedMap.set(wa.email.toLowerCase(), wa));
     try {
       const raw = localStorage.getItem('pillsync_registered_users');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          list = parsed.filter((u) => !isDemoEmail(u.email));
+          parsed
+            .filter((u) => !isDemoEmail(u.email))
+            .forEach((u) => {
+              const key = u.email.toLowerCase();
+              mergedMap.set(key, { ...mergedMap.get(key), ...u });
+            });
         }
       }
     } catch (e) {
       console.error(e);
     }
-    if (list.length === 0) {
-      list = [...WORKING_ACCOUNTS];
-    }
-    return list;
+    return Array.from(mergedMap.values());
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -53,19 +56,19 @@ export function AdminUsersPage() {
         const backendUsers = res.data.filter((u) => !isDemoEmail(u.email));
 
         setUsers((prev) => {
-          // Merge backendUsers with prev, keeping server as source of truth and pruning demo accounts
-          const cleanPrev = prev.filter((p) => !isDemoEmail(p.email));
-          const merged = [...backendUsers];
-          for (const localU of cleanPrev) {
-            const exists = merged.some(
-              (m) =>
-                (m.id && localU.id && String(m.id) === String(localU.id)) ||
-                (m.email && localU.email && m.email.toLowerCase() === localU.email.toLowerCase())
-            );
-            if (!exists) {
-              merged.push(localU);
-            }
-          }
+          const mergedMap = new Map();
+          WORKING_ACCOUNTS.forEach((wa) => mergedMap.set(wa.email.toLowerCase(), wa));
+          prev
+            .filter((p) => !isDemoEmail(p.email))
+            .forEach((u) => {
+              const key = u.email.toLowerCase();
+              mergedMap.set(key, { ...mergedMap.get(key), ...u });
+            });
+          backendUsers.forEach((u) => {
+            const key = u.email.toLowerCase();
+            mergedMap.set(key, { ...mergedMap.get(key), ...u });
+          });
+          const merged = Array.from(mergedMap.values());
           try {
             localStorage.setItem('pillsync_registered_users', JSON.stringify(merged));
           } catch (e) {
